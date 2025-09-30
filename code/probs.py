@@ -323,11 +323,38 @@ class BackoffAddLambdaLanguageModel(AddLambdaLanguageModel):
         super().__init__(vocab, lambda_)
 
     def prob(self, x: Wordtype, y: Wordtype, z: Wordtype) -> float:
-        # TODO: Reimplement me so that I do backoff
-        return super().prob(x, y, z)
-        # Don't forget the difference between the Wordtype z and the
-        # 1-element tuple (z,). If you're looking up counts,
-        # these will have very different counts!
+        """
+        Compute p(z | xy) using add-lambda smoothing with backoff.
+
+        Formula from reading section F.3:
+        p̂(z | xy) = (c(xyz) + λV · p̂(z|y)) / (c(xy) + λV)
+
+        This recursively backs off to:
+        p̂(z | y) = (c(yz) + λV · p̂(z)) / (c(y) + λV)
+        p̂(z) = (c(z) + λV · p̂()) / (c() + λV)
+        p̂() = 1/V  (uniform distribution over vocabulary)
+        """
+        # Note: Don't confuse the Wordtype z with the 1-element tuple (z,)
+        # event_count[(z,)] is the count of z as an event (unigram count)
+        # context_count[()] is the total count of all tokens
+
+        # Recursively compute backed-off estimates
+        # Base case: uniform distribution
+        p_uniform = 1.0 / self.vocab_size
+
+        # Back off from unigram to uniform: p̂(z)
+        p_z = ((self.event_count[(z,)] + self.lambda_ * self.vocab_size * p_uniform) /
+               (self.context_count[()] + self.lambda_ * self.vocab_size))
+
+        # Back off from bigram to unigram: p̂(z | y)
+        p_z_given_y = ((self.event_count[(y, z)] + self.lambda_ * self.vocab_size * p_z) /
+                       (self.context_count[(y,)] + self.lambda_ * self.vocab_size))
+
+        # Back off from trigram to bigram: p̂(z | xy)
+        p_z_given_xy = ((self.event_count[(x, y, z)] + self.lambda_ * self.vocab_size * p_z_given_y) /
+                        (self.context_count[(x, y)] + self.lambda_ * self.vocab_size))
+
+        return p_z_given_xy
 
 
 class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
