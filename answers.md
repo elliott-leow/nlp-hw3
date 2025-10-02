@@ -544,3 +544,42 @@ The log-linear model's main advantage is **flexibility**—it can incorporate di
 ### Part (d): Improved log-linear model
 
 *(To be implemented: This section would add features from reading section J, such as unigram features, OOV-specific parameters, and trigram interaction terms. The goal is to beat the add-λ backoff baseline.)*
+
+## Question 8: Speech recognition
+
+According to Bayes' Theorem, we want to choose the transcription $\vec{w}$ that maximizes the **posterior probability** $p(\vec{w} \mid u)$ given the audio utterance $u$.
+
+By Bayes' Theorem:
+$$p(\vec{w} \mid u) = \frac{p(u \mid \vec{w}) \cdot p(\vec{w})}{p(u)}$$
+
+Since $p(u)$ is constant for all candidate transcriptions (we're choosing among transcriptions for the same audio), we want to maximize:
+$$p(\vec{w} \mid u) \propto p(u \mid \vec{w}) \cdot p(\vec{w})$$
+
+Working in log space, we maximize:
+$$\log p(\vec{w} \mid u) = \log p(u \mid \vec{w}) + \log p(\vec{w}) + \text{const}$$
+
+### What quantity are we trying to maximize?
+
+The **log posterior probability** $\log p(\vec{w} \mid u)$, or equivalently (ignoring the constant term), the sum:
+$$\log p(u \mid \vec{w}) + \log p(\vec{w})$$
+
+### How should we compute it?
+
+For each of the 9 candidate transcriptions $\vec{w}$:
+
+1. **Acoustic model score**: $\log p(u \mid \vec{w})$ is provided in column 2 of the file (e.g., -3513.58 for the last candidate). This represents how likely the audio $u$ would sound if the speaker were trying to say $\vec{w}$.
+
+2. **Language model score**: $\log p(\vec{w})$ is computed using our trained trigram language model. This represents how probable the word sequence $\vec{w}$ is as an English sentence.
+
+3. **Combined score**: Add the two log-probabilities:
+   $$\text{score}(\vec{w}) = \log p(u \mid \vec{w}) + \log p(\vec{w})$$
+
+4. **Decision**: Choose the candidate $\vec{w}$ with the **highest** combined score.
+
+### Intuition
+
+This implements the **noisy channel model**: the speaker intends to say some English sentence $\vec{w}$ (modeled by $p(\vec{w})$), which is then "corrupted" through speech production and acoustic transmission (modeled by $p(u \mid \vec{w})$). By combining both models, we find the transcription that best balances:
+- Being plausible English (high language model probability)
+- Matching the observed audio (high acoustic model probability)
+
+A candidate with perfect English but poor acoustic match, or perfect acoustic match but nonsensical English, would both score poorly. We want the best overall combination.
