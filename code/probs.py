@@ -330,6 +330,30 @@ class BackoffAddLambdaLanguageModel(AddLambdaLanguageModel):
         # these will have very different counts!
 
 
+        
+        #recursively get backed offed probability z given y
+        backoff_prob_zy = self._backoff_prob_bigram(y, z)
+        
+        return ((self.event_count[x, y, z] + self.lambda_ * self.vocab_size * backoff_prob_zy) /
+                (self.context_count[x, y] + self.lambda_ * self.vocab_size))
+    
+    def _backoff_prob_bigram(self, y: Wordtype, z: Wordtype) -> float:
+        #use formula from slides
+        #get backed off probability of z
+        backoff_prob_z = self._backoff_prob_unigram(z)
+        
+        return ((self.event_count[y, z] + self.lambda_ * self.vocab_size * backoff_prob_z) /
+                (self.context_count[y,] + self.lambda_ * self.vocab_size))
+    
+    def _backoff_prob_unigram(self, z: Wordtype) -> float:
+        #use formula from slides
+        
+        uniform_prob = 1.0 / self.vocab_size
+        
+        return ((self.event_count[z,] + self.lambda_ * self.vocab_size * uniform_prob) /
+                (self.context_count[()] + self.lambda_ * self.vocab_size))
+
+
 class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
     # Note the use of multiple inheritance: we are both a LanguageModel and a torch.nn.Module.
     
