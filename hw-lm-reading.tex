@@ -781,7 +781,7 @@ associated with them, you are insisting that certain related features have weigh
 
 You could further improve the design by saying that “bread” has weaker influence when it is in the more 
 distant past. This could be done by redefining the features: for example, in your version of (9), you could 
-scale down the feature value $(x_j z_m)$ by the number of word tokens that fall between $x$ and $z$.\footnote{A fancier approach is to \emph{learn} how much to scale down this influence. For example, you could keep the feature value defined as $(x_j z_m)$, but say that the feature weights for position $i-6$ (for example) are given by the matrix $\lambda_6 X$. Now $X$ is shared across all positions, but the various multipliers such as $\lambda_6$ are learned by SGD along with the entries of $X$ and $Y$. If you learn that $\lambda_6$ is close to 0, then you have learned that $w_{i-6}$ has little influence on $w_i$. (In this case, the model is technically log-quadratic rather than log-linear, and the objective function is no longer concave, but SGD will probably find good parameters anyway.) You will have to work out what the partial derivatives with respect to the entries of $\lambda$ as well as $X$ and $Y$.)}
+scale down the feature value $(x_j z_m)$ by the number of word tokens that fall between $x$ and $z$.
 
 \textbf{Note:} The provided code has separate methods for 3-grams, 2-grams, and 1-grams. To support general 
 $n$-grams, you’ll want to replace these with a single method that takes a list of $n$ words. It’s probably easiest 
