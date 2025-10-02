@@ -643,3 +643,141 @@ It would be **unfair** to choose the smoothing method by testing multiple values
 3. Use test data only once for final evaluation with the chosen hyperparameter
 
 This ensures the test set provides an unbiased estimate of how the system would perform on new, unseen data.
+
+## Question 10 (Extra Credit): Open-vocabulary modeling
+
+### Formulas for Open-Vocabulary Trigram Model
+
+In a standard finite-vocabulary model, we replace all unknown words with a single OOV token. An **open-vocabulary model** instead assigns specific probabilities to each possible word based on its spelling, using a character n-gram model.
+
+### Proposed Approach: Backoff to Character Model
+
+I propose extending the add-λ backoff framework to incorporate character-level modeling for unknown words.
+
+**For the unigram level:**
+
+Define the unigram probability as:
+$$\hat{p}(z) = \frac{c(z) + \alpha \cdot p_{\text{char}}(z)}{N + \alpha}$$
+
+where:
+- $c(z)$ = count of word $z$ in training corpus (0 for unseen words)
+- $N$ = total word tokens in training corpus
+- $\alpha$ = smoothing parameter (e.g., same as $\lambda$ used elsewhere)
+- $p_{\text{char}}(z)$ = character n-gram probability of the word spelling $z$
+
+**For bigram and trigram levels:**
+
+Use standard backoff formulas:
+$$\hat{p}(z|y) = \frac{c(yz) + \lambda V \cdot \hat{p}(z)}{c(y) + \lambda V}$$
+
+$$\hat{p}(z|xy) = \frac{c(xyz) + \lambda V \cdot \hat{p}(z|y)}{c(xy) + \lambda V}$$
+
+### Character N-gram Model
+
+The character model $p_{\text{char}}(z)$ represents the probability of generating the word $z$ character-by-character:
+
+$$p_{\text{char}}(z) = \prod_{i=1}^{|z|+1} p(c_i \mid c_{i-n+1}, \ldots, c_{i-1})$$
+
+where:
+- $c_0, c_{-1}, \ldots, c_{-n+2}$ are start-of-word symbols `<s>`
+- $c_1, c_2, \ldots, c_{|z|}$ are the letters of word $z$
+- $c_{|z|+1}$ is the end-of-word symbol `</s>`
+- $n$ is the character n-gram order (e.g., 3 for character trigrams)
+
+For example, for the word "cat" with character trigrams:
+$$p_{\text{char}}(\text{cat}) = p(\text{c}|\langle s\rangle \langle s\rangle) \cdot p(\text{a}|\langle s\rangle \text{c}) \cdot p(\text{t}|\text{c a}) \cdot p(\langle /s\rangle |\text{a t})$$
+
+Each character n-gram probability is estimated with add-λ smoothing over the character alphabet:
+$$p(c_i \mid c_{i-n+1} \ldots c_{i-1}) = \frac{c(c_{i-n+1} \ldots c_i) + \lambda}{c(c_{i-n+1} \ldots c_{i-1}) + \lambda |\Sigma|}$$
+
+where $|\Sigma|$ is the alphabet size (e.g., 26 letters + space + punctuation + start/end symbols).
+
+### Training the Character N-gram Model
+
+**Procedure:**
+
+1. **Extract word types:** Collect all unique words from the training corpus
+2. **Convert to character sequences:** For each word $w = w_1 w_2 \ldots w_k$, create the character sequence:
+   ```
+   <s> <s> w_1 w_2 ... w_k </s>
+   ```
+   (prepending $n-1$ start symbols for an n-gram model)
+3. **Count character n-grams:** Iterate through all character sequences and count occurrences of each character n-gram
+4. **Apply smoothing:** Use add-λ smoothing on character n-gram counts to get $p(c_i | \text{context})$
+5. **Store the model:** Keep character n-gram counts (or probabilities) for inference
+
+**Example counts for character trigrams from training words {"cat", "car", "dog"}:**
+- Count `<s><s>c` = 2 (from "cat" and "car")
+- Count `<s>ca` = 2
+- Count `cat` = 1, `car` = 1
+- Count `at</s>` = 1, `ar</s>` = 1
+- etc.
+
+### Handling Unknown Context Words (x, y, z)
+
+**Case 1: $z$ is unknown (not in training vocabulary)**
+- Use the character model: $c(z) = 0$, so $\hat{p}(z) = \frac{\alpha \cdot p_{\text{char}}(z)}{N + \alpha}$
+- The character model $p_{\text{char}}(z)$ can compute probability for any word spelling
+
+**Case 2: $y$ is unknown**
+- When computing $\hat{p}(z|y)$, we need $c(y)$ and $c(yz)$
+- For unknown $y$: $c(y) = 0$ and $c(yz) = 0$
+- The formula becomes: $\hat{p}(z|y) = \frac{0 + \lambda V \cdot \hat{p}(z)}{0 + \lambda V} = \hat{p}(z)$
+- This backs off entirely to the unigram model, which uses the character model for unknown $z$
+
+**Case 3: $x$ is unknown**
+- Similarly, when computing $\hat{p}(z|xy)$ with unknown $x$: $c(xy) = 0$ and $c(xyz) = 0$
+- The formula gives: $\hat{p}(z|xy) = \frac{0 + \lambda V \cdot \hat{p}(z|y)}{0 + \lambda V} = \hat{p}(z|y)$
+- This backs off to the bigram model
+
+**Case 4: Multiple unknown words**
+- The backoff chain ensures we eventually reach the unigram model
+- The unigram model can handle any word via the character model
+
+### Normalization (Ensuring $\sum_z p(z|xy) = 1$)
+
+The key to normalization is that $p_{\text{char}}(z)$ is a **proper probability distribution** over all possible words.
+
+**Why this sums to 1:**
+
+1. For any context $xy$, the backoff formula is:
+   $$\hat{p}(z|xy) = \frac{c(xyz) + \lambda V \cdot \hat{p}(z|y)}{c(xy) + \lambda V}$$
+
+2. Summing over all $z$:
+   $$\sum_z \hat{p}(z|xy) = \frac{\sum_z c(xyz) + \lambda V \cdot \sum_z \hat{p}(z|y)}{c(xy) + \lambda V}$$
+
+3. We know: $\sum_z c(xyz) = c(xy)$ (every occurrence of context $xy$ is followed by some word $z$)
+
+4. We know: $\sum_z \hat{p}(z|y) = 1$ (by induction/recursive normalization)
+
+5. Therefore:
+   $$\sum_z \hat{p}(z|xy) = \frac{c(xy) + \lambda V \cdot 1}{c(xy) + \lambda V} = 1$$
+
+**Character model normalization:**
+
+The character model normalizes over all possible words:
+$$\sum_{z \in \text{all words}} p_{\text{char}}(z) = 1$$
+
+This sum is over infinitely many words, but it converges because:
+- Longer words have lower probabilities (product of more conditional probabilities)
+- Each character step multiplies by a probability $\leq 1$
+- The geometric series converges
+
+### Advantages of Open-Vocabulary Modeling
+
+1. **Spelling sensitivity:** "bioengineering" and "xyzzy" get different probabilities based on character patterns
+2. **Morphological awareness:** Similar word forms (e.g., "running", "jumping") get similar probabilities
+3. **Length modeling:** Very long words naturally receive lower probabilities
+4. **No OOV bucket:** Each unknown word is treated individually rather than lumping all rare words together
+
+### Implementation Notes
+
+If implementing this approach:
+
+1. **Character vocabulary:** Define alphabet $\Sigma$ = {a-z, A-Z, 0-9, punctuation, `<s>`, `</s>`, ...}
+2. **Character n-gram order:** Character trigrams (n=3) or 4-grams work well
+3. **Caching:** Cache $p_{\text{char}}(z)$ for previously seen unknown words to avoid recomputation
+4. **Numerical stability:** Compute character probabilities in log-space to avoid underflow for long words
+5. **Training corpus:** Train character model on the same corpus as word model, extracting word types
+
+This approach bridges the gap between closed-vocabulary models (which treat all unknown words identically) and fully generative character models (which may be too flexible). It leverages word-level statistics when available while gracefully handling novel words through character-level evidence.
