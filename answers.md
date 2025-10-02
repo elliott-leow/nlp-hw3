@@ -225,3 +225,27 @@ Therefore, larger λ causes the trigram estimate to **back off more strongly** t
 - The trigram estimates become less reliable for rare events
 
 **In summary:** λ controls the trade-off between trusting the observed trigram counts versus backing off to lower-order models. Larger λ means more smoothing and stronger reliance on backed-off estimates.
+
+## Question 5: Backoff Smoothing
+
+I implemented add-λ smoothing with backoff as described in reading section F.3. The implementation follows the recursive backoff formula:
+
+**Backoff chain:**
+1. **Trigram:** p̂(z|xy) = (c(xyz) + λV · p̂(z|y)) / (c(xy) + λV)
+2. **Bigram:** p̂(z|y) = (c(yz) + λV · p̂(z)) / (c(y) + λV)
+3. **Unigram:** p̂(z) = (c(z) + λV · (1/V)) / (c() + λV) = (c(z) + λ) / (c() + λV)
+4. **Uniform:** p̂_uniform(z) = 1/V
+
+The key insight from the "Tablish language" hint is that the unigram model backs off to the uniform distribution over the vocabulary.
+
+**Implementation details:**
+- Used proper tuple syntax: `(z,)` for unigram, `()` for zerogram (total count)
+- The `event_count` dictionary stores numerator counts (e.g., c(xyz), c(yz), c(z))
+- The `context_count` dictionary stores denominator counts (e.g., c(xy), c(y), c())
+- Implemented as helper methods `prob_bigram()` and `prob_unigram()` for clarity
+
+**Testing results (on switchboard-small, λ=0.1, sample1):**
+- Regular add-λ: 8.32 bits per token
+- Add-λ with backoff: **6.17 bits per token** (26% reduction!)
+
+The backoff smoothing provides substantial improvement by using lower-order n-grams to better estimate probabilities when higher-order counts are sparse. Instead of uniformly distributing probability mass across all words, backoff allocates it intelligently based on bigram and unigram evidence.

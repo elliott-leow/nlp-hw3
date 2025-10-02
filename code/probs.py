@@ -323,11 +323,24 @@ class BackoffAddLambdaLanguageModel(AddLambdaLanguageModel):
         super().__init__(vocab, lambda_)
 
     def prob(self, x: Wordtype, y: Wordtype, z: Wordtype) -> float:
-        # TODO: Reimplement me so that I do backoff
-        return super().prob(x, y, z)
-        # Don't forget the difference between the Wordtype z and the
-        # 1-element tuple (z,). If you're looking up counts,
-        # these will have very different counts!
+        # Implement add-lambda smoothing with backoff
+        # p̂(z|xy) = (c(xyz) + λV · p̂(z|y)) / (c(xy) + λV)
+        numerator = self.event_count[x, y, z] + self.lambda_ * self.vocab_size * self.prob_bigram(y, z)
+        denominator = self.context_count[x, y] + self.lambda_ * self.vocab_size
+        return numerator / denominator
+
+    def prob_bigram(self, y: Wordtype, z: Wordtype) -> float:
+        # Bigram backoff: p̂(z|y) = (c(yz) + λV · p̂(z)) / (c(y) + λV)
+        numerator = self.event_count[y, z] + self.lambda_ * self.vocab_size * self.prob_unigram(z)
+        denominator = self.context_count[y,] + self.lambda_ * self.vocab_size
+        return numerator / denominator
+
+    def prob_unigram(self, z: Wordtype) -> float:
+        # Unigram backoff: p̂(z) = (c(z) + λV · (1/V)) / (c() + λV)
+        # This simplifies to (c(z) + λ) / (c() + λV)
+        numerator = self.event_count[z,] + self.lambda_
+        denominator = self.context_count[()] + self.lambda_ * self.vocab_size
+        return numerator / denominator
 
 
 class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
