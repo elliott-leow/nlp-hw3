@@ -583,3 +583,63 @@ This implements the **noisy channel model**: the speaker intends to say some Eng
 - Matching the observed audio (high acoustic model probability)
 
 A candidate with perfect English but poor acoustic match, or perfect acoustic match but nonsensical English, would both score poorly. We want the best overall combination.
+
+## Question 9 (Extra Credit): Language modeling for speech recognition
+
+### Part (a): Implementation
+
+I implemented the `speechrec.py` program that performs speech recognition using Bayes' Theorem to select the best candidate transcription. The program:
+
+1. **Reads utterance files** in the format specified:
+   - First line: reference transcription length (ignored for selection, used only for scoring)
+   - Lines 2-10: Nine candidate transcriptions with format: `WER acoustic_log_prob length transcription`
+
+2. **Computes combined scores** for each candidate using Bayes' Theorem:
+   ```
+   log p(w|u) = log p(u|w) + log p(w)
+   ```
+   where:
+   - `log p(u|w)` is the acoustic model score (provided in column 2 of the file)
+   - `log p(w)` is the language model probability (computed from our trained trigram model)
+
+3. **Selects the best candidate** by maximizing the combined score
+
+4. **Reports word error rates** both per-file and overall (weighted by utterance length)
+
+The implementation closely follows the structure of `fileprob.py`, reading transcriptions and computing their probabilities under the language model.
+
+### Part (b): Experimental Results
+
+**Choosing a smoothing method:**
+
+I trained language models on the `switchboard` corpus using add-λ smoothing with backoff and experimented with different λ values on the development sets:
+
+| λ value | dev/easy WER | dev/unrestricted WER |
+|---------|-------------|---------------------|
+| 0.0001  | 0.189       | 0.485              |
+| 0.001   | 0.181       | 0.488              |
+| 0.01    | 0.183       | 0.467              |
+
+Based on these results, I selected **λ = 0.01 with backoff smoothing** as my final model because:
+
+1. It achieved the best performance on `dev/unrestricted` (0.467 WER)
+2. The unrestricted set is more representative of real speech recognition challenges (random sample rather than cherry-picked easy cases)
+3. While λ=0.001 was slightly better on dev/easy, the difference was minimal (0.181 vs 0.183) compared to the substantial improvement on dev/unrestricted (0.467 vs 0.488)
+
+**Final test results with λ = 0.01 backoff smoothing:**
+
+- **test/easy:** 0.160 (16.0% word error rate)
+- **test/unrestricted:** 0.422 (42.2% word error rate)
+
+**Analysis:**
+
+The easy test set has much lower error rate (16%) compared to unrestricted (42%), which makes sense since the easy utterances were carefully selected to be clearer and more well-formed. The backoff smoothing helps by using lower-order n-grams when trigram counts are sparse, which is particularly valuable in speech recognition where many word combinations may not have been seen in training.
+
+**What would be unfair?**
+
+It would be **unfair** to choose the smoothing method by testing multiple values directly on the test set and selecting the one that performs best. This is "peeking at the answers" and would give an optimistically biased estimate of real-world performance. The proper methodology (which I followed) is:
+1. Use training data to train models with different hyperparameters
+2. Use development data to select the best hyperparameter
+3. Use test data only once for final evaluation with the chosen hyperparameter
+
+This ensures the test set provides an unbiased estimate of how the system would perform on new, unseen data.
