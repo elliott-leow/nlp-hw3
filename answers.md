@@ -111,3 +111,117 @@ When V (vocabulary size) increases:
 Even though the larger corpus provides more training examples (2.19M tokens vs 209K tokens), the add-� smoothing method is penalized by having to distribute probability over 4� as many vocabulary words. The smoothing constant �=0.01 adds relatively little probability mass (0.01 per word), but when multiplied by V, it substantially inflates the denominator.
 
 This demonstrates a fundamental limitation of simple add-� smoothing: it doesn't scale well as vocabulary size increases. More sophisticated smoothing methods (like backoff smoothing) handle this better by backing off to lower-order n-grams rather than distributing probability uniformly across the entire vocabulary.
+
+## Question 4: Analysis
+
+### Part (a): What if V doesn't include OOV?
+
+If we mistakenly set V = 19,999 instead of V = 20,000 (excluding OOV from the count), both the UNIFORM and add-λ estimates would violate a fundamental requirement: **probabilities must sum to 1**.
+
+**For UNIFORM smoothing:**
+
+The formula is: p̂(z|xy) = 1/V for all z
+
+If V = 19,999 but there are actually 20,000 possible outcomes (the 19,999 word types plus OOV), then:
+- Each outcome gets probability 1/19,999
+- Total probability = 20,000 × (1/19,999) = 20,000/19,999 ≈ 1.00005 > 1
+
+This violates the axiom that probabilities must sum to 1, making the model mathematically invalid.
+
+**For add-λ smoothing:**
+
+The formula is: p̂(z|xy) = (c(xyz) + λ) / (c(xy) + λV)
+
+If V = 19,999 instead of 20,000:
+- The denominator c(xy) + λV is too small by exactly λ
+- When we sum p̂(z|xy) over all 20,000 actual possible outcomes (including OOV), we get:
+
+  Σ_z p̂(z|xy) = Σ_z (c(xyz) + λ) / (c(xy) + λV)
+              = [Σ_z c(xyz) + 20,000λ] / (c(xy) + 19,999λ)
+              = [c(xy) + 20,000λ] / (c(xy) + 19,999λ)
+              > 1
+
+Again, probabilities don't sum to 1, making the model invalid.
+
+**Why this matters:** Both models need V to match the actual number of possible outcomes in the vocabulary (including special tokens like OOV and EOS) so that the probability distribution is properly normalized.
+
+### Part (b): What goes wrong with λ = 0?
+
+With λ = 0, the add-λ formula becomes:
+
+p̂(z|xy) = (c(xyz) + 0) / (c(xy) + 0) = c(xyz) / c(xy)
+
+This is the **unsmoothed maximum likelihood estimate (MLE)**, which has several serious problems:
+
+1. **Zero probabilities for unseen events:** Any trigram xyz that didn't appear in training gets p̂(z|xy) = 0/c(xy) = 0. This is unrealistic—just because we didn't observe something doesn't mean it's impossible.
+
+2. **Undefined log probabilities:** When evaluating test data, we compute log p̂(z|xy). If p̂(z|xy) = 0, then log(0) = -∞, which breaks our calculations.
+
+3. **Zero probability for entire sentences:** If a test sentence contains even one unseen trigram, the entire sentence gets probability 0 (since probabilities multiply). This makes the model useless for evaluation.
+
+4. **Infinite perplexity:** Perplexity = 2^(cross-entropy). With zero probabilities, cross-entropy = ∞, so perplexity = ∞.
+
+5. **Division by zero:** If c(xy) = 0 (context never seen), we'd have 0/0, which is undefined.
+
+**Testing λ = 0:** If you try training with λ = 0 and test on data with unseen trigrams, fileprob.py would encounter log(0) and likely crash or return -inf for the log probability.
+
+The whole point of smoothing is to avoid these zero probabilities by allocating some probability mass to unseen events. Even λ = 0.001 is better than λ = 0 because it ensures all trigrams have positive probability.
+
+### Part (c): Backoff behavior with novel trigrams
+
+The backoff add-λ formula (from reading section F.3) is:
+
+p̂(z|xy) = (c(xyz) + λV · p̂(z|y)) / (c(xy) + λV)
+
+where p̂(z|y) is the backed-off bigram estimate (computed recursively with the same backoff formula).
+
+**Case 1: c(xyz) = c(xyz') = 0 (both trigrams unseen)**
+
+For both trigrams:
+- p̂(z|xy) = (0 + λV · p̂(z|y)) / (c(xy) + λV) = (λV · p̂(z|y)) / (c(xy) + λV)
+- p̂(z'|xy) = (0 + λV · p̂(z'|y)) / (c(xy) + λV) = (λV · p̂(z'|y)) / (c(xy) + λV)
+
+**Answer:** No, p̂(z|xy) ≠ p̂(z'|xy) in general! They are only equal if p̂(z|y) = p̂(z'|y).
+
+The probability is: **p̂(z|xy) = [λV/(c(xy) + λV)] · p̂(z|y)**
+
+This is proportional to the backed-off bigram probability. The backoff model uses lower-order information to distinguish between unseen trigrams.
+
+**Contrast with regular add-λ (no backoff):** Without backoff, both would equal λ/(c(xy) + λV), treating all unseen trigrams identically regardless of their bigram contexts.
+
+**Case 2: c(xyz) = c(xyz') = 1 (both seen once)**
+
+- p̂(z|xy) = (1 + λV · p̂(z|y)) / (c(xy) + λV)
+- p̂(z'|xy) = (1 + λV · p̂(z'|y)) / (c(xy) + λV)
+
+**Answer:** Again, p̂(z|xy) ≠ p̂(z'|xy) in general unless p̂(z|y) = p̂(z'|y).
+
+Now both trigrams have the same observed count (1), but their probabilities still differ based on their bigram contexts. The backed-off bigram probabilities still influence the final estimates, though less strongly than in Case 1.
+
+### Part (d): Effect of increasing λ in backoff smoothing
+
+In the backoff formula:
+
+p̂(z|xy) = (c(xyz) + λV · p̂(z|y)) / (c(xy) + λV)
+
+**As λ increases:**
+
+1. **Numerator:** c(xyz) + λV · p̂(z|y) becomes dominated by the term λV · p̂(z|y)
+2. **Denominator:** c(xy) + λV becomes dominated by λV
+3. **Ratio approaches:** (λV · p̂(z|y)) / λV = p̂(z|y)
+
+Therefore, larger λ causes the trigram estimate to **back off more strongly** to the bigram estimate p̂(z|y). The observed trigram count c(xyz) matters less and less.
+
+**Effect on probability estimates:**
+- Trigrams with the same bigram context y become more similar to each other (since they all converge toward p̂(z|y))
+- Rare trigrams benefit more from the backed-off information
+- The model relies more on lower-order n-grams and less on specific trigram observations
+- The distinction from part (c) becomes more pronounced: unseen trigrams are differentiated by their bigram contexts rather than being treated uniformly
+
+**As λ → 0:**
+- The observed counts c(xyz) dominate
+- Less backing off occurs
+- The model approaches the unsmoothed MLE (with all its problems from part b)
+- The trigram estimates become less reliable for rare events
+
+**In summary:** λ controls the trade-off between trusting the observed trigram counts versus backing off to lower-order models. Larger λ means more smoothing and stronger reliance on backed-off estimates.
