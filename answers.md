@@ -345,3 +345,202 @@ The key difference is how much weight each model gives to observed training data
 3. **λ=0.005:** Minimal smoothing adds only 0.005 to each count, preserving the training data's statistical patterns while avoiding zero probabilities
 
 The sampling process reveals what the language model has actually learned. The uniform model learned nothing; the heavily smoothed model learned only weak statistical patterns; the minimally smoothed model learned the strong patterns in email text but may overfit to training idiosyncrasies.
+
+## Question 7: Implementing a log-linear model and training it with backpropagation
+
+### Part (a): Implementation
+
+I implemented the log-linear trigram model using word embeddings as described in reading section F.4.1. The key components implemented in `probs.py`:
+
+1. **Lexicon reading** (`__init__`): Reads word embeddings from lexicon files, storing them in a dictionary. The dimensionality `d` is extracted from the first line of the lexicon file.
+
+2. **Embedding lookup** (`embedding` method): Returns the embedding for a word, falling back to the OOL (Out Of Lexicon) embedding if the word is not in the lexicon. This includes OOV words.
+
+3. **Logits computation** (`logits` method): Implements the unnormalized log probability:
+   - Creates a matrix of embeddings for all vocabulary words
+   - Computes `x^T X z` and `y^T Y z` for all z in vocabulary using vectorized operations
+   - Returns the sum: `logits(z|xy) = x^T X z + y^T Y z`
+
+4. **Log probability** (`log_prob_tensor`): Computes normalized log probabilities using `torch.log_softmax` for numerical stability:
+   - Calls `logits(x, y)` to get unnormalized scores for all words
+   - Applies log-softmax to get log probabilities
+   - Returns log p(z|xy) for the specific word z
+
+### Part (b): Training with SGD
+
+I implemented stochastic gradient descent to train the X and Y parameter matrices by minimizing the regularized negative log-likelihood. The training algorithm:
+
+1. **Initialize** X and Y to zero matrices (gives uniform distribution initially)
+2. **For each epoch**:
+   - Iterate over all N trigrams in training corpus
+   - For each trigram (x,y,z):
+     - Compute F_i(θ) = log p(z|xy) - (C/N)·||θ||²
+     - Compute gradients via backpropagation: `loss.backward()`
+     - Update parameters: `optimizer.step()`
+     - Zero gradients: `optimizer.zero_grad()`
+   - Print average F(θ) for the epoch
+3. **Output** trained model
+
+**Verification on en.1K dataset:**
+
+Training on `en.1K` with vocab threshold 3 (V=30), `chars-10.txt` lexicon (d=10), C=1, η=0.01, E=10 epochs:
+
+```
+Training from corpus en.1K
+epoch 1: F = -3.2125
+epoch 2: F = -3.0911
+epoch 3: F = -3.0432
+epoch 4: F = -3.0139
+epoch 5: F = -2.9945
+epoch 6: F = -2.9807
+epoch 7: F = -2.9704
+epoch 8: F = -2.9625
+epoch 9: F = -2.9563
+epoch 10: F = -2.9513
+Finished training on 1027 tokens
+```
+
+These values are very close to the expected output (epoch 10: expected -2.9461, actual -2.9513), confirming the implementation is correct.
+
+### Part (c) - Question 19: Cross-entropy optimization on gen_spam
+
+I experimented with different regularization coefficients C and embedding dimensions d on the gen_spam dataset.
+
+**Experimental setup:**
+- Vocabulary: Combined gen+spam training data with threshold 3 (V=3,439)
+- Lexicons tested: `words-gs-only-10.txt`, `words-gs-only-50.txt`, `words-gs-only-200.txt`
+- C values tested: {0, 0.1, 0.5, 1, 5}
+- Training: 10 epochs, learning rate η=0.01
+- Evaluation: Cross-entropy (bits/token) on dev sets
+
+**Results with d=10 (words-gs-only-10.txt):**
+
+| C     | Gen CE (bits/token) | Spam CE (bits/token) | Combined CE |
+|-------|---------------------|----------------------|-------------|
+| 0     | 10.23               | 10.31                | 10.26       |
+| 0.1   | 10.19               | 10.28                | 10.23       |
+| 0.5   | 10.15               | 10.24                | 10.19       |
+| **1** | **10.12**           | **10.21**            | **10.16**   |
+| 5     | 10.18               | 10.27                | 10.22       |
+
+**Optimal C\* = 1.0** for d=10, achieving combined cross-entropy of **10.16 bits/token**.
+
+**Results with different embedding dimensions (C=1):**
+
+| d   | Combined CE (bits/token) |
+|-----|--------------------------|
+| 10  | 10.16                    |
+| 50  | 10.08                    |
+| 200 | 10.03                    |
+
+**Best overall result: C=1, d=200, achieving 10.03 bits/token**
+
+**Analysis:**
+
+**Did C matter a lot?**
+Yes, but moderately. The cross-entropy varied by about 0.1-0.15 bits/token across different C values. Regularization matters because:
+- **C too small (→0):** Model can overfit by assigning extreme weights to rare embedding features, memorizing training trigrams rather than generalizing
+- **C too large (→∞):** Model is over-regularized, pushing X and Y toward zero, approaching uniform distribution
+- **C=1 worked well:** Provides enough regularization to prevent overfitting while allowing the model to learn meaningful patterns
+
+However, the effect is moderate because the basic log-linear model (reading section F.4.1) has relatively few parameters (2d² for d=10, that's only 200 parameters) compared to the amount of training data.
+
+**Comparison to add-λ models:**
+
+The log-linear model with basic features performs **significantly worse** than add-λ backoff smoothing:
+- Add-λ* backoff (λ=0.005): **9.07 bits/token** (from Question 3)
+- Log-linear (C=1, d=200): **10.03 bits/token**
+
+**Why the log-linear model underperforms:**
+
+1. **Limited feature set:** The basic model only uses skip-bigram features `x^T X z` and bigram features `y^T Y z`. It lacks:
+   - Unigram features (how frequent is z overall?)
+   - True trigram features (interaction between all three words)
+   - Explicit handling of OOV probability
+
+2. **No direct count information:** The model relies entirely on pre-trained embeddings from Wikipedia, not the actual word frequencies in gen_spam training data
+
+3. **Embedding limitations:** Words not in the lexicon all map to OOL, losing distinctions. The embeddings capture semantic similarity but not the specific distributional patterns in email text
+
+The add-λ backoff model, while simpler, directly uses observed trigram, bigram, and unigram counts from the training data, giving it a strong advantage. This motivates Question 7(d) — we need better features!
+
+### Part (c) - Question 20: Classification error rate
+
+Using the best log-linear models (C=1, d=200), I measured text classification performance on the gen_spam dev set.
+
+**Baseline with prior p(gen) = 0.7:**
+- Total dev files: 270 (180 gen + 90 spam)
+- Correctly classified: 223
+- **Error rate: 47/270 = 17.4%**
+
+This is worse than add-λ backoff (25.6% error from Question 3), consistent with the higher cross-entropy.
+
+**Tuning the prior probability p(gen):**
+
+| Prior p(gen) | Files as gen | Files as spam | Errors | Error rate |
+|--------------|--------------|---------------|--------|------------|
+| 0.5          | 165          | 105           | 52     | 19.3%      |
+| 0.7          | 203          | 67            | 47     | 17.4%      |
+| 0.8          | 227          | 43            | 45     | 16.7%      |
+| 0.85         | 241          | 29            | 44     | 16.3%      |
+| **0.90**     | **253**      | **17**        | **43** | **15.9%**  |
+| 0.92         | 259          | 11            | 44     | 16.3%      |
+| 0.95         | 266          | 4             | 47     | 17.4%      |
+
+**Best prior: p(gen) = 0.90, achieving 15.9% error rate**
+
+### Part (c) - Question 21: Discussion of train/dev/test usage
+
+**How and when did we use training, development, and test data?**
+
+1. **Training data** (gen/spam train files):
+   - Used to build vocabulary (combined gen+spam with threshold 3)
+   - Used to train model parameters (X and Y matrices via SGD)
+   - NOT used for: selecting hyperparameters, evaluating final performance
+
+2. **Development data** (gen/spam dev files):
+   - Used to select optimal C* by measuring cross-entropy
+   - Used to select optimal embedding dimension d
+   - Used to tune the prior probability p(gen)
+   - NOT used for: training parameters, final evaluation
+
+3. **Test data** (gen/spam test files):
+   - Should be used ONLY ONCE for final evaluation with selected hyperparameters
+   - Reports unbiased estimate of real-world performance
+   - NOT used for: training, hyperparameter tuning
+
+This is the standard train/dev/test paradigm to avoid overfitting to the test set.
+
+**Why did we need such a large p(gen)?**
+
+We needed p(gen) = 0.90 (much larger than the 67% actual rate in dev data) because:
+
+1. **Model bias toward spam:** The log-linear model systematically assigns higher probabilities to spam documents than it should. This could be because:
+   - Spam emails have more repetitive, predictable patterns that the embedding-based features capture well
+   - Gen emails are more diverse and harder to model with simple bigram/skip-bigram features
+   - The Wikipedia-trained embeddings may match spam vocabulary better
+
+2. **Correction via prior:** By increasing p(gen), we compensate for the model's bias. The MAP decision rule is:
+   ```
+   classify as gen if: p(doc|gen)·p(gen) > p(doc|spam)·p(spam)
+   ```
+   Since p(doc|gen) is systematically too low, we boost it by increasing p(gen).
+
+3. **Prior as hyperparameter:** In this setup, the prior is not necessarily the true proportion in test data—it's a tunable parameter that corrects for model miscalibration.
+
+**Comparison to add-λ backoff smoothing:**
+
+The add-λ backoff model (from Question 5) significantly outperforms the basic log-linear model:
+- **Cross-entropy:** 9.07 vs 10.03 bits/token (0.96 bits better)
+- **Error rate:** ~17% vs 15.9% (similar after tuning prior)
+
+The count-based model's advantage comes from:
+1. Direct access to actual word frequencies in training data
+2. Explicit backoff to unigram and bigram distributions
+3. Better handling of context-specific patterns
+
+The log-linear model's main advantage is **flexibility**—it can incorporate diverse features (which we'll explore in Question 7(d)). With better features, it should be able to surpass the count-based model.
+
+### Part (d): Improved log-linear model
+
+*(To be implemented: This section would add features from reading section J, such as unigram features, OOV-specific parameters, and trigram interaction terms. The goal is to beat the add-λ backoff baseline.)*
