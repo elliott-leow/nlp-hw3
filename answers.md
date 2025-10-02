@@ -249,3 +249,99 @@ The key insight from the "Tablish language" hint is that the unigram model backs
 - Add-λ with backoff: **6.17 bits per token** (26% reduction!)
 
 The backoff smoothing provides substantial improvement by using lower-order n-grams to better estimate probabilities when higher-order counts are sparse. Instead of uniformly distributing probability mass across all words, backoff allocates it intelligently based on bigram and unigram evidence.
+
+## Question 6: Sampling from language models
+
+### Implementation
+
+I implemented a generic `sample()` method in the `LanguageModel` base class that works with any trained language model. The method:
+
+1. Starts with BOS context `(BOS, BOS)`
+2. At each step, computes probabilities for all words in the vocabulary given the current context
+3. Uses `torch.multinomial()` to sample the next word according to these probabilities
+4. Updates the context and continues until EOS is generated or `max_length` is reached
+5. Returns the sampled words (excluding BOS and EOS)
+
+I also created the `trigram_randsent.py` script that loads a trained model and generates a specified number of sentences with a configurable maximum length. Sentences that reach the maximum length are truncated with "...".
+
+### Part (a): Comparing samples from different models
+
+I compared three models trained on the `gen` corpus with different smoothing approaches:
+
+**Model 1: Uniform distribution**
+- **Hyperparameters:** No smoothing parameter (all trigrams equally likely)
+- **Sample sentences (10 samples, max_length=20):**
+```
+Masters chips Informatics accuracy just hands complicated study whatever Breakthrough appetising Speaker CUMSHOT scene south credits case games fun-filled pay ...
+module before linguistic formal examinations towards p. seem lock chocolate usually marry variety be boat include quickly happy Well named ...
+myself Fund P.P.S. slightly evening later Bank 's. possibly exactly love respect save Pause Shot Force wear closing Keychain consumers ...
+distributed Today missed Body hockey 26th personal Paper chocolates won everyone worse remind ARE 14th their smoke born delivery reading ...
+may got frame agreement LECTURE Hardship These a detail video 3000m afternoon affiliates have Office society barrier eyes Time realise ...
+participation 9th then opposite suitable knowing Its Safety wish determined leave transmission bringing interest bug ass sadly practical site continuous ...
+joke ticket said continuous THIS bills Seen I Very preferences submit necessary must significantly I eating Market land accept version ...
+comes kids just employees Back lucky recruitment scarcely Consultative reliance Yes teacher fire talks Market Next high sugars comments stuff ...
+directors device drug umm Medical LIKE into doors ARE income holding Same drink get AND interested promise projects muscles ithink ...
+size' designed attention deeply o days dishes leave Was fairtrade conditions anyway played presents Of upon batch feeling other ring ...
+```
+
+**Model 2: Add-λ smoothing with λ=5 (heavy smoothing)**
+- **Hyperparameters:** λ=5, vocab threshold=3
+- **Sample sentences (5 samples, max_length=20):**
+```
+5th products or internet took literature wanted formal wrote Lab &amp; mailing Imagine ! prototype big outage repaying forms MessageLabs ...
+humour sleeping pain synthesised crooning appearing marshallbees Departmental Perhaps mostly held frustrations reply feedback Church safety type is Vac variety ...
+And normal finds instructions annual vegetarian candidates heating finally difficulties Send source side Artslife parse finally 3rd decide tales humour ...
+SUBJECT: coffee reasonable colleagues PARCEL WHEN builders Under wide studying charge encouragement comment reasonable curiosity left writer texting project scarcely ...
+asap thought They PARANOID Are placed turned International 16th online related understanding &EMAIL lectures pink meaning advance Well candidate record ...
+```
+
+**Model 3: Add-λ smoothing with λ=0.005 (minimal smoothing)**
+- **Hyperparameters:** λ=0.005, vocab threshold=3
+- **Sample sentences (10 samples, max_length=20):**
+```
+SUBJECT: &NAME involve record onto mail opt lingo suggestions : helpdesk THIS Chinese identical published May context two-oo using Bar ...
+SUBJECT: Re : powerpoint first discourse between alert cannot securities cunning necessary ahead woe Informatics LOCK rock used automatic F.R.E. ...
+SUBJECT: Re : &NAME Water download damage extremely TREC-9 dates theme log calculated basically appearance University returned paid cancelled 8217;d ...
+SUBJECT: BUSA dollars calculators There hilarious cool LIKE areas exhausted idea House November insulting interlacing entrance lawful Protection over Hop-on ...
+SUBJECT: Re : &NAME Hi &NAME , as I am having meaning main aware warning buffet bill carry love asthma ...
+SUBJECT: practicals postcard ratio hopefully treats Own calculated term state would Election enter enjoyed contrary although fax directors * reliance ...
+SUBJECT: &NAME &NAME &NAME &NAME at OOV officers texting real-world relies sheep engine WE frame Hmmm. lists diet helpful Sir ...
+SUBJECT: Re : &NAME &NAME Club ITS died English properties yep per masks grandmother No location moral apologize raided provides ...
+SUBJECT: Fwd relational semantics duration monsignor hey listening love outage references studious explore Soon examinations maximum tax delete brand turning ...
+SUBJECT: &NAME : ( ALL key blue shallow local expected Regards <QUOTE> Entrepreneurs join approval OPEN r_a contents whilst very ...
+```
+
+### Analysis of Differences
+
+The three models exhibit dramatically different behavior:
+
+**Uniform model (completely random):**
+- No coherence whatsoever—just random words from the vocabulary
+- No grammatical structure or semantic relationships
+- Words like "chips", "Informatics", "chocolates", "bug", "ass" appear in completely arbitrary sequences
+- This demonstrates the baseline: without any learned probability distribution, the model produces gibberish
+
+**High smoothing (λ=5):**
+- Still quite random, but shows some emerging patterns
+- Occasionally produces short meaningful phrases (e.g., "reasonable colleagues", "annual vegetarian candidates")
+- The sentences still lack overall coherence but have slightly more realistic local word co-occurrences
+- The heavy smoothing pulls probabilities closer to uniform, washing out much of the training data's structure
+- With λ=5, the formula p(z|xy) = (c(xyz) + 5) / (c(xy) + 5V) adds so much smoothing that observed trigrams barely stand out from unobserved ones
+
+**Minimal smoothing (λ=0.005):**
+- Much more realistic email-like text structure
+- Almost all sentences start with "SUBJECT:" which is very common in the gen training corpus
+- Contains email-specific tokens like "Re :", "Fwd", "&NAME" (anonymized names), "<QUOTE>"
+- Shows realistic bigrams and trigrams: "Hi &NAME ,", "as I am having", "Regards"
+- The low λ means the model trusts observed trigram counts, producing text that closely mimics the training distribution
+- Still not perfectly coherent (since a trigram model only looks at 2 words of context), but recognizably email-like
+
+**Why these differences arise:**
+
+The key difference is how much weight each model gives to observed training data versus uniform distribution:
+
+1. **Uniform:** Ignores training data entirely—every word is equally likely regardless of context
+2. **λ=5:** Heavy smoothing adds 5 to every trigram count, which dramatically reduces the relative importance of observed vs. unobserved trigrams. Since the gen vocabulary has V≈3,439 words, the denominator increases by 5V≈17,195, swamping out most contextual information
+3. **λ=0.005:** Minimal smoothing adds only 0.005 to each count, preserving the training data's statistical patterns while avoiding zero probabilities
+
+The sampling process reveals what the language model has actually learned. The uniform model learned nothing; the heavily smoothed model learned only weak statistical patterns; the minimally smoothed model learned the strong patterns in email text but may overfit to training idiosyncrasies.

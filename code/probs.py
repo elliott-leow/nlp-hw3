@@ -270,6 +270,48 @@ class LanguageModel:
         if self.progress % freq == 1:
             sys.stderr.write(".")
 
+    def sample(self, max_length: int = 100) -> List[Wordtype]:
+        """Sample a sentence from the language model.
+
+        Start with BOS context and sample tokens until EOS is generated or max_length is reached.
+        Returns the sampled words (excluding BOS and EOS).
+
+        Args:
+            max_length: Maximum number of tokens to generate (not counting BOS/EOS)
+
+        Returns:
+            List of sampled word tokens
+        """
+        # Start with BOS context
+        x, y = BOS, BOS
+        sentence = []
+
+        # Convert vocab to list for consistent indexing
+        vocab_list = list(self.vocab)
+
+        for _ in range(max_length):
+            # Get log probabilities for all words in vocab given context (x, y)
+            log_probs = torch.tensor([self.log_prob(x, y, z) for z in vocab_list])
+
+            # Convert to probabilities
+            probs = torch.exp(log_probs)
+
+            # Sample from the distribution using torch.multinomial
+            z_idx = torch.multinomial(probs, num_samples=1).item()
+            z = vocab_list[z_idx]
+
+            # If we sampled EOS, stop (don't include it in the output)
+            if z == EOS:
+                break
+
+            # Add to sentence
+            sentence.append(z)
+
+            # Update context for next token
+            x, y = y, z
+
+        return sentence
+
 
 ##### SPECIFIC FAMILIES OF LANGUAGE MODELS
 
