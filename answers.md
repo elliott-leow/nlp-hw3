@@ -14,15 +14,7 @@ It then classifies based on the maximum a posteriori (MAP) decision rule.
 
 ### Part (a): Error rate with add-1 smoothing
 
-Using add-1 smoothing (λ=1) with prior p(gen) = 0.7:
-
-- **Total dev files:** 270 (180 gen + 90 spam)
-- **Files classified as gen:** 247
-- **Files classified as spam:** 23
-- **Gen files misclassified as spam:** 1
-- **Spam files misclassified as gen:** 68
-
-**Error rate:** 69/270 = **25.56%**
+If we use add-1 smoothing with prior p(gen) of 0.7, for the 270 dev files with 180 gen and 90 spam, we classified 247 of them as gen and 23 of them as spam, so we have 1 gen misclassification and 68 spam misclassifications, giving us an error rate of 69/270 = 25.56%
 
 The high error rate is primarily due to many spam emails being misclassified as genuine emails. This suggests that with λ=1 and this prior, the gen language model assigns relatively high probability even to spam messages.
 
