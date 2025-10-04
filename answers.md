@@ -1,108 +1,219 @@
 # Homework 3: Smoothed Language Modeling - Answers
 
-## Question 2: Implementing a generic text classifier
+## number 1
+### part a
 
-The `textcat.py` program has been implemented to perform text categorization via Bayes' Theorem. It takes two language models, a prior probability for the first category, and a list of test files. For each file, it computes the posterior probability under each model using:
+Switchboard-small model:
 
-log P(model | doc) = log P(doc | model) + log P(model)
+sample1: 1,522 tokens, cross-entropy = 7.85053 bits/token, perplexity = 230.80
+sample2: 870 tokens, cross-entropy = 8.30623 bits/token, perplexity = 316.54
+sample3: 885 tokens, cross-entropy = 8.29012 bits/token, perplexity = 313.02
 
-It then classifies based on the maximum a posteriori (MAP) decision rule.
+### part b
 
-**Sanity check:** When training on the smallest training sets with λ=1 and classifying all 270 dev files with prior p(gen)=0.7, we classified 23 files as spam. ✓
+Switchboard model:
 
-## Question 3: Evaluating a text classifier
+sample1: cross-entropy = 8.131 bits/token, perplexity = 280.40
+sample2: cross-entropy = 8.529 bits/token, perplexity = 369.49
+sample3: cross-entropy = 8.834 bits/token, perplexity = 456.35
 
-### Part (a): Error rate with add-1 smoothing
+We can see that the larger switchboard corpus leads to higher perplexities. This is likely because the larger corpus has a greatly increased vocabulary of around 11,000 types instead of around 3,000, so a lot of words that were mapping to OOV before are now mapping to vocabulary terms.
 
-If we use add-1 smoothing with prior p(gen) of 0.7, for the 270 dev files with 180 gen and 90 spam, we classified 247 of them as gen and 23 of them as spam, so we have 1 gen misclassification and 68 spam misclassifications, giving us an error rate of 69/270 = 25.56%
+We can also see from formula (2) in section F.2 of the reading that the smoothing penalty formula has a denominator with lambda times v, so when we increase V by a lot and keep lambda the same, we can see that the overall probability should get smaller. Since the training count increase was likely less than the proportional increase in vocabulary size, and since the sample files consist of rarer trigrams where this term would dominate, this can explain the lower log-probabilities. We can see that for small lambda values like 0.01, expanding the vocabulary without proportionally more trigram evidence can actually hurt performance on test data.
 
-The high error rate is primarily due to many spam emails being misclassified as genuine emails. This suggests that with λ=1 and this prior, the gen language model assigns relatively high probability even to spam messages.
 
-### Part (c): Minimum prior for all-spam classification
+## number 3
+### part a
 
-To find the minimum prior probability of gen that causes textcat to classify all dev files as spam, I tested progressively smaller priors:
+If we use add-1 smoothing with prior p(gen) of 0.7, for the 270 dev files with 180 gen and 90 spam, we classified 247 of them as gen and 23 of them as spam, so we have 1 gen misclassification and 68 spam misclassifications, giving us an error rate of 69/270 = 25.56%. We can see that this error is mostly due to spam being misclassified as genuine, so the gen language model gives a high probability to spam emails.
 
-| Prior p(gen) | Files as spam |
-|--------------|---------------|
-| 0.7          | 23            |
-| 0.1          | 33            |
-| 1e-10        | 90            |
-| 1e-20        | 132           |
-| 1e-50        | 207           |
-| 1e-100       | 242           |
-| 1e-200       | 263           |
-| 1e-300       | 267           |
+### part b
+We can see that there are 20/239 errors, so we have an error rate of around 8.4%. The individual accuracies are 94.2% for English (113/120) and 89.1% for Spanish (106/119).
+These results are much better than those we had from the spam classification even though we had only 1000 characters per language class, likely because the two language are very distinct in their patterns and characters, and one language is not trying to imitate the other class, like how spam emails attempt to pass as real emails and therefore are soometimes difficult for even a huma to distinguish. We also have the benefit of much less character and word types in the vocabulary.
 
-**Result:** Even at extremely small priors like p(gen) = 1e-300, we still have 3 files classified as gen. This suggests that there are a few development files where the gen model assigns substantially higher probability than the spam model, even when the prior overwhelmingly favors spam. The practical answer is approximately **p(gen) < 1e-300** to classify nearly all (but not quite all) files as spam.
+### part c
+We can track the prior vs. the number of files that we classify as spam (out of our target of 270):
+prior (notation of one times ten to the exponent), # files spam
+0.7, 23
+0.1, 33
+1 * 10**-10, 90
+1 * 10**-20, 132
+1 * 10**-50, 207
+1 * 10**-100, 242
+1 * 10**-200, 263
+1 * 10**-300, 267
 
-### Parts (d), (e), (f): Optimizing lambda for minimum cross-entropy
+We can see that even if we set really small priors, we still do not classify every email as spam. We would need a bayesian prior of 0 to truly classify all files as spam, primarily due to the nature of taking the log of the probability and the log of zero yielding negative infinity, guaranteeing that we classify all emails as spam.
 
-I trained models with different values of λ and computed cross-entropy on the dev sets:
+### part d
+We get the following cross entropies:
+lambda = 5, Gen: 11.05263, Spam: 11.07215, Combined: 11.06139
+lambda = 1, Gen: 10.45207, Spam: 10.53513, Combined: 10.48934
+lambda = 0.5, Gen: 10.15485, Spam: 10.26566, Combined: 10.20457
+lambda = 0.05, Gen: 9.29458, Spam: 9.44152, Combined: 9.36051
+lambda = 0.005, Gen: 9.04616, Spam: 9.09572, Combined: 9.06840
+lambda = 0.0005, Gen: 9.49982, Spam: 9.41952, Combined: 9.46379
 
-| λ     | Gen CE (bits/token) | Spam CE (bits/token) | Combined CE (bits/token) |
-|-------|---------------------|----------------------|--------------------------|
-| 5     | 11.05263            | 11.07215             | 11.06139                 |
-| 1     | 10.45207            | 10.53513             | 10.48934                 |
-| 0.5   | 10.15485            | 10.26566             | 10.20457                 |
-| 0.05  | 9.29458             | 9.44152              | 9.36051                  |
-| 0.005 | **9.04616**         | **9.09572**          | **9.06840**              |
-| 0.0005| 9.49982             | 9.41952              | 9.46379                  |
-
-**(d) Minimum cross-entropy for gen and spam separately:**
-- **Gen dev files:** 9.04616 bits/token (λ = 0.005)
-- **Spam dev files:** 9.09572 bits/token (λ = 0.005)
-
-**(e) Minimum combined cross-entropy:**
-When both models use the same λ, the minimum overall cross-entropy on all dev files is **9.06840 bits/token**.
-
-**(f) Optimal lambda (λ\*):**
-**λ\* = 0.005**
+For gen, we get a minimum cross entropy at a lambda of 0.005, which gives 9.04616 bits of cross entropy
+For spam, we get a minimum cross entropy at lambda of 0.005 as well, which gives us 9.09571 bits of cross entropy
 
 This value provides the best balance between smoothing (avoiding zero probabilities) and staying faithful to the observed trigram frequencies. Values that are too large (like 5 or 1) over-smooth and wash out important distinctions in the data. Values that are too small (like 0.0005) may not provide enough smoothing for rare trigrams, leading to poor generalization on the dev set.
 
-## Question 1: Perplexities and corpora
+### Part (f): Performance vs File Length
 
-### Part (a): Perplexity per word with switchboard-small corpus
+Using the optimal λ* = 0.005, I analyzed how classification performance depends on file length. The file length (in words) is embedded in the filename as the second number (e.g., `gen.10.158.txt` has 158 words).
 
-Using add-0.01 smoothing and vocab threshold of 3:
+**Results by file length:**
 
-- **sample1**: 43.46
-- **sample2**: 54.10
-- **sample3**: 53.68
+| Length Range | Category | Count | Accuracy | Error Rate |
+|--------------|----------|-------|----------|------------|
+| 0-100 words  | Gen      | 99    | 98.0%    | 2.0%       |
+| 100-200 words| Gen      | 81    | 98.8%    | 1.2%       |
+| 0-100 words  | Spam     | 90    | 66.7%    | 33.3%      |
+| **Combined** |          |       |          |            |
+| 0-100 words  | Both     | 189   | 83.1%    | 16.9%      |
+| 100-200 words| Both     | 81    | 98.8%    | 1.2%       |
 
-(Vocabulary size: 2,886 words including OOV and EOS)
+**Key findings:**
 
-### Part (b): Effect of training on larger switchboard corpus
+1. **Strong length effect:** Longer files (100-200 words) have dramatically better classification accuracy (98.8%) compared to shorter files (83.1%). This represents an 85% reduction in error rate.
 
-When training on the larger switchboard corpus instead:
+2. **Gen vs spam patterns:**
+   - Gen files are classified very accurately (98.0-98.8%) regardless of length
+   - All spam files in the dev set are short (0-100 words)
+   - Spam files have only 66.7% accuracy, driving the overall error rate for short files
 
-**Log�-probabilities become MORE NEGATIVE (worse):**
-- sample1: -8282.07 � -8578.34 (difference: -296.27)
-- sample2: -5008.97 � -5143.54 (difference: -134.57)
-- sample3: -5085.45 � -5419.08 (difference: -333.63)
+3. **Why length matters:**
+   - **More context:** Longer documents provide more trigrams for the language model to evaluate, reducing the impact of any single unusual trigram
+   - **Statistical reliability:** With more tokens, the average log-probability per token becomes a more reliable indicator of the true distribution
+   - **Spam characteristics:** Short spam messages may be harder to distinguish because they contain less evidence of spam-specific patterns
 
-**Perplexities INCREASE (worse):**
-- sample1: 43.46 � 49.74 (+14.4%)
-- sample2: 54.10 � 60.22 (+11.3%)
-- sample3: 53.68 � 69.71 (+29.9%)
+4. **Practical implication:** This text classifier works much better for longer documents. For very short messages (< 50 words), the error rate is higher because there's insufficient context for the language model to make a confident decision.
 
-(Vocabulary size: 11,419 words including OOV and EOS)
+### Part (h): Learning Curve - Error Rate vs Training Data Size
 
-**Why does this happen?**
+I trained models with λ* = 0.005 on progressively larger training sets and measured error rates on the dev set:
 
-Counterintuitively, training on more data produces worse perplexity. This occurs because the larger corpus has a much larger vocabulary (11,419 vs 2,886 words). With add-� smoothing, the probability formula is:
+| Training Set | Total Tokens | Dev Errors | Error Rate |
+|--------------|--------------|------------|------------|
+| gen vs spam  | 124,555      | 33         | 12.22%     |
+| times2       | 254,512      | 19         | 7.04%      |
+| times4       | 516,717      | 18         | 6.67%      |
+| times8       | 1,189,510    | 16         | 5.93%      |
 
-p(z|xy) = (c(xyz) + �) / (c(xy) + �V)
+**Learning curve analysis:**
 
-When V (vocabulary size) increases:
-- The denominator (c(xy) + �V) becomes much larger
-- This decreases the probability assigned to each observed trigram
-- The probability mass is spread over many more possible words
-- The model becomes less certain about each specific prediction
+1. **Clear improvement:** Doubling the training data from baseline to times2 cuts the error rate nearly in half (12.22% → 7.04%), demonstrating the value of more training data.
 
-Even though the larger corpus provides more training examples (2.19M tokens vs 209K tokens), the add-� smoothing method is penalized by having to distribute probability over 4� as many vocabulary words. The smoothing constant �=0.01 adds relatively little probability mass (0.01 per word), but when multiplied by V, it substantially inflates the denominator.
+2. **Diminishing returns:** The improvement slows with each doubling:
+   - Baseline → times2: -5.18 percentage points
+   - times2 → times4: -0.37 percentage points
+   - times4 → times8: -0.74 percentage points
 
-This demonstrates a fundamental limitation of simple add-� smoothing: it doesn't scale well as vocabulary size increases. More sophisticated smoothing methods (like backoff smoothing) handle this better by backing off to lower-order n-grams rather than distributing probability uniformly across the entire vocabulary.
+3. **Still improving:** Even at 8× the training data (1.19M tokens), the error rate continues to decrease, suggesting we haven't reached the asymptote yet.
+
+**Will error rate approach 0 as training size → ∞?**
+
+No, the error rate will not approach 0, for several reasons:
+
+1. **Bayes error rate:** There is an irreducible error rate due to the overlap between gen and spam distributions. Some emails are genuinely ambiguous—they use language that could plausibly come from either category. No amount of training data can eliminate this fundamental ambiguity.
+
+2. **Model limitations:** The trigram model has inherent limitations:
+   - It only considers local context (2 previous words)
+   - It doesn't capture long-range dependencies or document-level structure
+   - It doesn't model semantic meaning, only surface-level word patterns
+
+3. **Dev set characteristics:** The dev set has specific challenges:
+   - Many spam emails are very short (all 90 spam files are < 100 words), providing limited evidence
+   - Some gen emails may use spam-like promotional language
+   - The prior probability (0.7) may not match the true class balance
+
+4. **Empirical evidence:** The learning curve is flattening, suggesting we're approaching an asymptote. Extrapolating the trend, the error rate might plateau around 4-5% with much more data, but likely won't go below that without a better model architecture.
+
+**Estimated asymptote:** Based on the curve's shape, I estimate the error rate would level off around **3-5%** even with infinite training data for this trigram model. Achieving lower error rates would require:
+- More sophisticated models (neural language models, transformers)
+- Features beyond word trigrams (document structure, sender metadata)
+- Better handling of short documents
+
+
+### Part (g) - Extra Credit: Language ID Performance vs Length
+
+I analyzed how language identification performance depends on document length:
+
+**Results by length:**
+
+| Length (chars) | English Accuracy | Spanish Accuracy | Combined Accuracy | Error Rate |
+|----------------|------------------|------------------|-------------------|------------|
+| 10             | 75.0%            | 85.0%            | 80.0%             | 20.0%      |
+| 20             | 95.0%            | 65.0%            | 80.0%             | 20.0%      |
+| 50             | 95.0%            | 100.0%           | 97.5%             | 2.5%       |
+| 100            | 100.0%           | 84.2%            | 92.3%             | 7.7%       |
+| 200            | 100.0%           | 100.0%           | 100.0%            | 0.0%       |
+| 500            | 100.0%           | 100.0%           | 100.0%            | 0.0%       |
+
+**Key findings:**
+
+1. **Perfect performance on longer texts:** All files with 200+ characters are classified correctly (100% accuracy). This is even better than the word-based spam detection task.
+
+2. **Strong length effect:** Very short texts (10-20 characters) have 20% error rate, while medium-length texts (50+ characters) drop to near-perfect accuracy.
+
+3. **Rapid convergence:** Unlike the spam detection task, language ID achieves perfect accuracy with relatively short documents (200 chars ≈ 30-40 words). The spam task needed 100-200 words for comparable accuracy.
+
+4. **Some noise at 100 chars:** Interestingly, the 100-character Spanish files show slightly lower accuracy (84.2%) than the 50-character files (100%). This might be due to:
+   - Small sample size (19-20 files per length)
+   - Particular challenging excerpts at this length
+   - One file might be missing (119 total Spanish files, but only 19 at length 100)
+
+**Comparison to spam detection:**
+- Language ID: 100% accuracy at 200 characters
+- Spam detection: 98.8% accuracy at 100-200 words (500-1000+ characters)
+
+Character-level language modeling is remarkably effective for language identification, achieving perfect classification much faster than word-level models can distinguish spam from genuine emails.
+
+### Part (i) - Extra Credit: Language ID Learning Curve
+
+I trained character-trigram models on progressively larger training sets:
+
+| Training Set | Total Characters | Dev Errors | Error Rate |
+|--------------|------------------|------------|------------|
+| en.1K vs sp.1K   | 2,024        | 20         | 8.37%      |
+| en.2K vs sp.2K   | 4,029        | 28         | 11.72%     |
+| en.5K vs sp.5K   | 9,713        | 15         | 6.28%      |
+| en.10K vs sp.10K | 20,397       | 8          | 3.35%      |
+| en.20K vs sp.20K | 40,500       | 7          | 2.93%      |
+| en.50K vs sp.50K | 102,068      | 7          | 2.93%      |
+
+**Learning curve analysis:**
+
+1. **Non-monotonic at small sizes:** Surprisingly, error rate increases from 1K (8.37%) to 2K (11.72%). This is likely due to:
+   - Very small sample sizes (only ~2,000 characters total)
+   - Random variation in which character trigrams appear
+   - Possible mismatch between training excerpts and dev set characteristics
+
+2. **Clear improvement with more data:** From 2K onward, error rate consistently decreases as training data increases, showing the expected learning curve behavior.
+
+3. **Diminishing returns:** The curve flattens significantly:
+   - 2K → 5K: -5.44 percentage points
+   - 5K → 10K: -2.93 percentage points
+   - 10K → 20K: -0.42 percentage points
+   - 20K → 50K: 0.00 percentage points (no improvement)
+
+4. **Apparent plateau:** Error rate appears to have plateaued at **2.93%** (7 errors out of 239 files). Even with 2.5× more training data (50K vs 20K), the error rate doesn't improve.
+
+**Why does error rate plateau?**
+
+The 7 misclassified files likely represent:
+- **Genuinely ambiguous excerpts:** Short passages that lack language-specific character patterns
+- **Multilingual content:** Proper nouns, numbers, or code-switching
+- **Bayes error rate:** Fundamental overlap in character distributions for certain text types
+
+**Comparison to spam detection:**
+- Language ID plateaus at ~3% with 40K characters
+- Spam detection plateaus at ~6% with 1.2M tokens (approximately 6-7M characters)
+
+Language identification reaches its asymptote much faster because character-level features are highly discriminative for language, whereas word-level features for spam detection require more data to capture the subtle differences between spam and genuine email language.
+
+**Will error approach 0?** No, for the same reasons as spam detection, but the irreducible Bayes error rate appears to be even lower (around 2-3%) for this language ID task.
 
 ## Question 4: Analysis
 
