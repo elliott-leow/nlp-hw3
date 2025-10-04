@@ -1,0 +1,68 @@
+{
+  "results": [
+    {
+      "l2": 0.01,
+      "dropout": 0.1,
+      "batch_size": 32,
+      "epochs": 2,
+      "dev_perplexity": 1888.285793962665
+    },
+    {
+      "l2": 0.01,
+      "dropout": 0.1,
+      "batch_size": 64,
+      "epochs": 2,
+      "dev_perplexity": 2194.661456946392
+    },
+    {
+      "l2": 0.01,
+      "dropout": 0.2,
+      "batch_size": 32,
+      "epochs": 2,
+      "dev_perplexity": 2834.2224789584848
+    },
+    {
+      "l2": 0.01,
+      "dropout": 0.2,
+      "batch_size": 64,
+      "epochs": 2,
+      "dev_perplexity": 2303.478994550939
+    },
+    {
+      "l2": 0.1,
+      "dropout": 0.1,
+      "batch_size": 32,
+      "epochs": 2,
+      "dev_perplexity": 2273.6886974216977
+    },
+    {
+      "l2": 0.1,
+      "dropout": 0.1,
+      "batch_size": 64,
+      "epochs": 2,
+      "dev_perplexity": 2164.9358495706583
+    },
+    {
+      "l2": 0.1,
+      "dropout": 0.2,
+      "batch_size": 32,
+      "epochs": 2,
+      "dev_perplexity": 2416.1032486645436
+    },
+    {
+      "l2": 0.1,
+      "dropout": 0.2,
+      "batch_size": 64,
+      "epochs": 2,
+      "dev_perplexity": 2442.2259627435146
+    }
+  ],
+  "best_params": {
+    "l2": 0.01,
+    "dropout": 0.1,
+    "batch_size": 32,
+    "epochs": 2,
+    "dev_perplexity": 1888.285793962665
+  },
+  "best_perplexity": 1888.285793962665
+}

@@ -1,0 +1,506 @@
+INFO:hyperparam_search:Starting hyperparameter search...
+INFO:hyperparam_search:Vocab: vocab-genspam.txt
+INFO:hyperparam_search:Train: ../data/gen_spam/train/gen
+INFO:hyperparam_search:Dev: ../data/gen_spam/dev/gen/gen.101.156.txt
+INFO:hyperparam_search:Lexicon: ../lexicons/words-10.txt
+INFO:probs:Read vocab of size 3439 from vocab-genspam.txt
+INFO:hyperparam_search:
+============================================================
+INFO:hyperparam_search:Configuration 1/8
+INFO:hyperparam_search:l2=0.01, dropout=0.1, batch_size=32, epochs=2
+INFO:hyperparam_search:============================================================
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/home/kano/Documents/nlp-hw3/code/./hyperparam_search.py", line 127, in <module>
+    main()
+  File "/home/kano/Documents/nlp-hw3/code/./hyperparam_search.py", line 75, in main
+    model = ImprovedLogLinearLanguageModel(
+  File "/home/kano/Documents/nlp-hw3/code/probs.py", line 591, in __init__
+    super().__init__(vocab, lexicon_file, l2, epochs)
+  File "/home/kano/Documents/nlp-hw3/code/probs.py", line 410, in __init__
+    self.embeddings[word] = torch.tensor(embedding_values, dtype=torch.float32)
+/home/kano/Documents/nlp-hw3/code/probs.py:410: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:84.)
+  self.embeddings[word] = torch.tensor(embedding_values, dtype=torch.float32)
+INFO:probs:Start optimizing on 101287 training tokens with improved model...
+INFO:probs:Using Adam optimizer, dropout=0.1, batch_size=32
+INFO:probs:Starting epoch 1/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 206.7453
+INFO:probs:Batch 200, Avg Loss: 168.5847
+INFO:probs:Batch 300, Avg Loss: 142.9024
+INFO:probs:Batch 400, Avg Loss: 124.4421
+INFO:probs:Batch 500, Avg Loss: 109.4986
+INFO:probs:Batch 600, Avg Loss: 97.2074
+INFO:probs:Batch 700, Avg Loss: 86.6144
+INFO:probs:Batch 800, Avg Loss: 77.6280
+INFO:probs:Batch 900, Avg Loss: 70.1057
+INFO:probs:Batch 1000, Avg Loss: 63.9245
+INFO:probs:Batch 1100, Avg Loss: 58.8073
+INFO:probs:Batch 1200, Avg Loss: 54.5395
+INFO:probs:Batch 1300, Avg Loss: 50.9236
+INFO:probs:Batch 1400, Avg Loss: 47.8212
+INFO:probs:Batch 1500, Avg Loss: 45.1289
+INFO:probs:Batch 1600, Avg Loss: 42.7741
+INFO:probs:Batch 1700, Avg Loss: 40.7008
+INFO:probs:Batch 1800, Avg Loss: 38.8535
+INFO:probs:Batch 1900, Avg Loss: 37.2016
+INFO:probs:Batch 2000, Avg Loss: 35.7167
+INFO:probs:Batch 2100, Avg Loss: 34.3716
+INFO:probs:Batch 2200, Avg Loss: 33.1503
+INFO:probs:Batch 2300, Avg Loss: 32.0314
+INFO:probs:Batch 2400, Avg Loss: 31.0070
+INFO:probs:Batch 2500, Avg Loss: 30.0659
+INFO:probs:Batch 2600, Avg Loss: 29.1961
+INFO:probs:Batch 2700, Avg Loss: 28.3922
+INFO:probs:Batch 2800, Avg Loss: 27.6437
+INFO:probs:Batch 2900, Avg Loss: 26.9478
+INFO:probs:Batch 3000, Avg Loss: 26.2978
+INFO:probs:Batch 3100, Avg Loss: 25.6923
+INFO:probs:Completed epoch 1/2, avg loss: 25.3106
+INFO:probs:Starting epoch 2/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 7.4608
+INFO:probs:Batch 200, Avg Loss: 7.4608
+INFO:probs:Batch 300, Avg Loss: 7.4738
+INFO:probs:Batch 400, Avg Loss: 7.4803
+INFO:probs:Batch 500, Avg Loss: 7.4836
+INFO:probs:Batch 600, Avg Loss: 7.4786
+INFO:probs:Batch 700, Avg Loss: 7.4836
+INFO:probs:Batch 800, Avg Loss: 7.4745
+INFO:probs:Batch 900, Avg Loss: 7.4784
+INFO:probs:Batch 1000, Avg Loss: 7.4779
+INFO:probs:Batch 1100, Avg Loss: 7.4816
+INFO:probs:Batch 1200, Avg Loss: 7.4828
+INFO:probs:Batch 1300, Avg Loss: 7.4843
+INFO:probs:Batch 1400, Avg Loss: 7.4809
+INFO:probs:Batch 1500, Avg Loss: 7.4798
+INFO:probs:Batch 1600, Avg Loss: 7.4809
+INFO:probs:Batch 1700, Avg Loss: 7.4797
+INFO:probs:Batch 1800, Avg Loss: 7.4751
+INFO:probs:Batch 1900, Avg Loss: 7.4735
+INFO:probs:Batch 2000, Avg Loss: 7.4735
+INFO:probs:Batch 2100, Avg Loss: 7.4717
+INFO:probs:Batch 2200, Avg Loss: 7.4715
+INFO:probs:Batch 2300, Avg Loss: 7.4712
+INFO:probs:Batch 2400, Avg Loss: 7.4722
+INFO:probs:Batch 2500, Avg Loss: 7.4727
+INFO:probs:Batch 2600, Avg Loss: 7.4732
+INFO:probs:Batch 2700, Avg Loss: 7.4726
+INFO:probs:Batch 2800, Avg Loss: 7.4732
+INFO:probs:Batch 2900, Avg Loss: 7.4715
+INFO:probs:Batch 3000, Avg Loss: 7.4718
+INFO:probs:Batch 3100, Avg Loss: 7.4730
+INFO:probs:Completed epoch 2/2, avg loss: 7.4733
+INFO:probs:Enhanced training completed.
+INFO:hyperparam_search:Dev Perplexity: 1888.29
+INFO:hyperparam_search:*** NEW BEST MODEL! Perplexity: 1888.29 ***
+INFO:hyperparam_search:
+============================================================
+INFO:hyperparam_search:Configuration 2/8
+INFO:hyperparam_search:l2=0.01, dropout=0.1, batch_size=64, epochs=2
+INFO:hyperparam_search:============================================================
+INFO:probs:Start optimizing on 101287 training tokens with improved model...
+INFO:probs:Using Adam optimizer, dropout=0.1, batch_size=64
+INFO:probs:Starting epoch 1/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 191.6270
+INFO:probs:Batch 200, Avg Loss: 150.1358
+INFO:probs:Batch 300, Avg Loss: 125.2377
+INFO:probs:Batch 400, Avg Loss: 107.0085
+INFO:probs:Batch 500, Avg Loss: 92.4208
+INFO:probs:Batch 600, Avg Loss: 80.6103
+INFO:probs:Batch 700, Avg Loss: 71.0170
+INFO:probs:Batch 800, Avg Loss: 63.3114
+INFO:probs:Batch 900, Avg Loss: 57.1653
+INFO:probs:Batch 1000, Avg Loss: 52.2059
+INFO:probs:Batch 1100, Avg Loss: 48.1418
+INFO:probs:Batch 1200, Avg Loss: 44.7522
+INFO:probs:Batch 1300, Avg Loss: 41.8851
+INFO:probs:Batch 1400, Avg Loss: 39.4253
+INFO:probs:Batch 1500, Avg Loss: 37.2919
+INFO:probs:Completed epoch 1/2, avg loss: 35.7265
+INFO:probs:Starting epoch 2/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 7.4582
+INFO:probs:Batch 200, Avg Loss: 7.4664
+INFO:probs:Batch 300, Avg Loss: 7.4549
+INFO:probs:Batch 400, Avg Loss: 7.4536
+INFO:probs:Batch 500, Avg Loss: 7.4515
+INFO:probs:Batch 600, Avg Loss: 7.4474
+INFO:probs:Batch 700, Avg Loss: 7.4421
+INFO:probs:Batch 800, Avg Loss: 7.4377
+INFO:probs:Batch 900, Avg Loss: 7.4370
+INFO:probs:Batch 1000, Avg Loss: 7.4402
+INFO:probs:Batch 1100, Avg Loss: 7.4394
+INFO:probs:Batch 1200, Avg Loss: 7.4393
+INFO:probs:Batch 1300, Avg Loss: 7.4393
+INFO:probs:Batch 1400, Avg Loss: 7.4388
+INFO:probs:Batch 1500, Avg Loss: 7.4398
+INFO:probs:Completed epoch 2/2, avg loss: 7.4388
+INFO:probs:Enhanced training completed.
+INFO:hyperparam_search:Dev Perplexity: 2194.66
+INFO:hyperparam_search:
+============================================================
+INFO:hyperparam_search:Configuration 3/8
+INFO:hyperparam_search:l2=0.01, dropout=0.2, batch_size=32, epochs=2
+INFO:hyperparam_search:============================================================
+INFO:probs:Start optimizing on 101287 training tokens with improved model...
+INFO:probs:Using Adam optimizer, dropout=0.2, batch_size=32
+INFO:probs:Starting epoch 1/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 242.6566
+INFO:probs:Batch 200, Avg Loss: 201.3047
+INFO:probs:Batch 300, Avg Loss: 172.5561
+INFO:probs:Batch 400, Avg Loss: 150.2827
+INFO:probs:Batch 500, Avg Loss: 131.9852
+INFO:probs:Batch 600, Avg Loss: 116.3802
+INFO:probs:Batch 700, Avg Loss: 103.0562
+INFO:probs:Batch 800, Avg Loss: 91.8432
+INFO:probs:Batch 900, Avg Loss: 82.6313
+INFO:probs:Batch 1000, Avg Loss: 75.1538
+INFO:probs:Batch 1100, Avg Loss: 69.0187
+INFO:probs:Batch 1200, Avg Loss: 63.9047
+INFO:probs:Batch 1300, Avg Loss: 59.5782
+INFO:probs:Batch 1400, Avg Loss: 55.8663
+INFO:probs:Batch 1500, Avg Loss: 52.6517
+INFO:probs:Batch 1600, Avg Loss: 49.8352
+INFO:probs:Batch 1700, Avg Loss: 47.3541
+INFO:probs:Batch 1800, Avg Loss: 45.1465
+INFO:probs:Batch 1900, Avg Loss: 43.1737
+INFO:probs:Batch 2000, Avg Loss: 41.3966
+INFO:probs:Batch 2100, Avg Loss: 39.7871
+INFO:probs:Batch 2200, Avg Loss: 38.3243
+INFO:probs:Batch 2300, Avg Loss: 36.9903
+INFO:probs:Batch 2400, Avg Loss: 35.7660
+INFO:probs:Batch 2500, Avg Loss: 34.6410
+INFO:probs:Batch 2600, Avg Loss: 33.6039
+INFO:probs:Batch 2700, Avg Loss: 32.6420
+INFO:probs:Batch 2800, Avg Loss: 31.7475
+INFO:probs:Batch 2900, Avg Loss: 30.9156
+INFO:probs:Batch 3000, Avg Loss: 30.1391
+INFO:probs:Batch 3100, Avg Loss: 29.4125
+INFO:probs:Completed epoch 1/2, avg loss: 28.9576
+INFO:probs:Starting epoch 2/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 7.6123
+INFO:probs:Batch 200, Avg Loss: 7.6188
+INFO:probs:Batch 300, Avg Loss: 7.6249
+INFO:probs:Batch 400, Avg Loss: 7.6261
+INFO:probs:Batch 500, Avg Loss: 7.6171
+INFO:probs:Batch 600, Avg Loss: 7.6100
+INFO:probs:Batch 700, Avg Loss: 7.6178
+INFO:probs:Batch 800, Avg Loss: 7.6177
+INFO:probs:Batch 900, Avg Loss: 7.6206
+INFO:probs:Batch 1000, Avg Loss: 7.6183
+INFO:probs:Batch 1100, Avg Loss: 7.6194
+INFO:probs:Batch 1200, Avg Loss: 7.6193
+INFO:probs:Batch 1300, Avg Loss: 7.6197
+INFO:probs:Batch 1400, Avg Loss: 7.6247
+INFO:probs:Batch 1500, Avg Loss: 7.6243
+INFO:probs:Batch 1600, Avg Loss: 7.6233
+INFO:probs:Batch 1700, Avg Loss: 7.6234
+INFO:probs:Batch 1800, Avg Loss: 7.6237
+INFO:probs:Batch 1900, Avg Loss: 7.6230
+INFO:probs:Batch 2000, Avg Loss: 7.6214
+INFO:probs:Batch 2100, Avg Loss: 7.6200
+INFO:probs:Batch 2200, Avg Loss: 7.6226
+INFO:probs:Batch 2300, Avg Loss: 7.6246
+INFO:probs:Batch 2400, Avg Loss: 7.6245
+INFO:probs:Batch 2500, Avg Loss: 7.6240
+INFO:probs:Batch 2600, Avg Loss: 7.6242
+INFO:probs:Batch 2700, Avg Loss: 7.6232
+INFO:probs:Batch 2800, Avg Loss: 7.6225
+INFO:probs:Batch 2900, Avg Loss: 7.6219
+INFO:probs:Batch 3000, Avg Loss: 7.6228
+INFO:probs:Batch 3100, Avg Loss: 7.6199
+INFO:probs:Completed epoch 2/2, avg loss: 7.6195
+INFO:probs:Enhanced training completed.
+INFO:hyperparam_search:Dev Perplexity: 2834.22
+INFO:hyperparam_search:
+============================================================
+INFO:hyperparam_search:Configuration 4/8
+INFO:hyperparam_search:l2=0.01, dropout=0.2, batch_size=64, epochs=2
+INFO:hyperparam_search:============================================================
+INFO:probs:Start optimizing on 101287 training tokens with improved model...
+INFO:probs:Using Adam optimizer, dropout=0.2, batch_size=64
+INFO:probs:Starting epoch 1/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 182.4630
+INFO:probs:Batch 200, Avg Loss: 154.4770
+INFO:probs:Batch 300, Avg Loss: 133.5077
+INFO:probs:Batch 400, Avg Loss: 115.6443
+INFO:probs:Batch 500, Avg Loss: 100.1906
+INFO:probs:Batch 600, Avg Loss: 86.7379
+INFO:probs:Batch 700, Avg Loss: 75.6597
+INFO:probs:Batch 800, Avg Loss: 67.1598
+INFO:probs:Batch 900, Avg Loss: 60.5411
+INFO:probs:Batch 1000, Avg Loss: 55.2474
+INFO:probs:Batch 1100, Avg Loss: 50.9167
+INFO:probs:Batch 1200, Avg Loss: 47.3056
+INFO:probs:Batch 1300, Avg Loss: 44.2479
+INFO:probs:Batch 1400, Avg Loss: 41.6266
+INFO:probs:Batch 1500, Avg Loss: 39.3568
+INFO:probs:Completed epoch 1/2, avg loss: 37.6915
+INFO:probs:Starting epoch 2/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 7.5811
+INFO:probs:Batch 200, Avg Loss: 7.5742
+INFO:probs:Batch 300, Avg Loss: 7.5642
+INFO:probs:Batch 400, Avg Loss: 7.5705
+INFO:probs:Batch 500, Avg Loss: 7.5757
+INFO:probs:Batch 600, Avg Loss: 7.5826
+INFO:probs:Batch 700, Avg Loss: 7.5832
+INFO:probs:Batch 800, Avg Loss: 7.5823
+INFO:probs:Batch 900, Avg Loss: 7.5826
+INFO:probs:Batch 1000, Avg Loss: 7.5806
+INFO:probs:Batch 1100, Avg Loss: 7.5788
+INFO:probs:Batch 1200, Avg Loss: 7.5789
+INFO:probs:Batch 1300, Avg Loss: 7.5767
+INFO:probs:Batch 1400, Avg Loss: 7.5742
+INFO:probs:Batch 1500, Avg Loss: 7.5749
+INFO:probs:Completed epoch 2/2, avg loss: 7.5739
+INFO:probs:Enhanced training completed.
+INFO:hyperparam_search:Dev Perplexity: 2303.48
+INFO:hyperparam_search:
+============================================================
+INFO:hyperparam_search:Configuration 5/8
+INFO:hyperparam_search:l2=0.1, dropout=0.1, batch_size=32, epochs=2
+INFO:hyperparam_search:============================================================
+INFO:probs:Start optimizing on 101287 training tokens with improved model...
+INFO:probs:Using Adam optimizer, dropout=0.1, batch_size=32
+INFO:probs:Starting epoch 1/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 184.8018
+INFO:probs:Batch 200, Avg Loss: 150.6871
+INFO:probs:Batch 300, Avg Loss: 126.4372
+INFO:probs:Batch 400, Avg Loss: 108.2004
+INFO:probs:Batch 500, Avg Loss: 93.2864
+INFO:probs:Batch 600, Avg Loss: 80.9103
+INFO:probs:Batch 700, Avg Loss: 70.8375
+INFO:probs:Batch 800, Avg Loss: 62.9641
+INFO:probs:Batch 900, Avg Loss: 56.8070
+INFO:probs:Batch 1000, Avg Loss: 51.8763
+INFO:probs:Batch 1100, Avg Loss: 47.8381
+INFO:probs:Batch 1200, Avg Loss: 44.4757
+INFO:probs:Batch 1300, Avg Loss: 41.6277
+INFO:probs:Batch 1400, Avg Loss: 39.1875
+INFO:probs:Batch 1500, Avg Loss: 37.0739
+INFO:probs:Batch 1600, Avg Loss: 35.2248
+INFO:probs:Batch 1700, Avg Loss: 33.5917
+INFO:probs:Batch 1800, Avg Loss: 32.1392
+INFO:probs:Batch 1900, Avg Loss: 30.8434
+INFO:probs:Batch 2000, Avg Loss: 29.6733
+INFO:probs:Batch 2100, Avg Loss: 28.6169
+INFO:probs:Batch 2200, Avg Loss: 27.6561
+INFO:probs:Batch 2300, Avg Loss: 26.7771
+INFO:probs:Batch 2400, Avg Loss: 25.9744
+INFO:probs:Batch 2500, Avg Loss: 25.2346
+INFO:probs:Batch 2600, Avg Loss: 24.5526
+INFO:probs:Batch 2700, Avg Loss: 23.9190
+INFO:probs:Batch 2800, Avg Loss: 23.3306
+INFO:probs:Batch 2900, Avg Loss: 22.7832
+INFO:probs:Batch 3000, Avg Loss: 22.2731
+INFO:probs:Batch 3100, Avg Loss: 21.7967
+INFO:probs:Completed epoch 1/2, avg loss: 21.4969
+INFO:probs:Starting epoch 2/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 7.4696
+INFO:probs:Batch 200, Avg Loss: 7.4957
+INFO:probs:Batch 300, Avg Loss: 7.4932
+INFO:probs:Batch 400, Avg Loss: 7.4834
+INFO:probs:Batch 500, Avg Loss: 7.4732
+INFO:probs:Batch 600, Avg Loss: 7.4731
+INFO:probs:Batch 700, Avg Loss: 7.4785
+INFO:probs:Batch 800, Avg Loss: 7.4830
+INFO:probs:Batch 900, Avg Loss: 7.4817
+INFO:probs:Batch 1000, Avg Loss: 7.4771
+INFO:probs:Batch 1100, Avg Loss: 7.4791
+INFO:probs:Batch 1200, Avg Loss: 7.4800
+INFO:probs:Batch 1300, Avg Loss: 7.4756
+INFO:probs:Batch 1400, Avg Loss: 7.4742
+INFO:probs:Batch 1500, Avg Loss: 7.4756
+INFO:probs:Batch 1600, Avg Loss: 7.4726
+INFO:probs:Batch 1700, Avg Loss: 7.4720
+INFO:probs:Batch 1800, Avg Loss: 7.4745
+INFO:probs:Batch 1900, Avg Loss: 7.4771
+INFO:probs:Batch 2000, Avg Loss: 7.4775
+INFO:probs:Batch 2100, Avg Loss: 7.4765
+INFO:probs:Batch 2200, Avg Loss: 7.4765
+INFO:probs:Batch 2300, Avg Loss: 7.4785
+INFO:probs:Batch 2400, Avg Loss: 7.4782
+INFO:probs:Batch 2500, Avg Loss: 7.4750
+INFO:probs:Batch 2600, Avg Loss: 7.4754
+INFO:probs:Batch 2700, Avg Loss: 7.4733
+INFO:probs:Batch 2800, Avg Loss: 7.4719
+INFO:probs:Batch 2900, Avg Loss: 7.4719
+INFO:probs:Batch 3000, Avg Loss: 7.4711
+INFO:probs:Batch 3100, Avg Loss: 7.4713
+INFO:probs:Completed epoch 2/2, avg loss: 7.4727
+INFO:probs:Enhanced training completed.
+INFO:hyperparam_search:Dev Perplexity: 2273.69
+INFO:hyperparam_search:
+============================================================
+INFO:hyperparam_search:Configuration 6/8
+INFO:hyperparam_search:l2=0.1, dropout=0.1, batch_size=64, epochs=2
+INFO:hyperparam_search:============================================================
+INFO:probs:Start optimizing on 101287 training tokens with improved model...
+INFO:probs:Using Adam optimizer, dropout=0.1, batch_size=64
+INFO:probs:Starting epoch 1/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 169.7202
+INFO:probs:Batch 200, Avg Loss: 136.5242
+INFO:probs:Batch 300, Avg Loss: 112.7169
+INFO:probs:Batch 400, Avg Loss: 94.3263
+INFO:probs:Batch 500, Avg Loss: 79.4992
+INFO:probs:Batch 600, Avg Loss: 67.9451
+INFO:probs:Batch 700, Avg Loss: 59.3509
+INFO:probs:Batch 800, Avg Loss: 52.8714
+INFO:probs:Batch 900, Avg Loss: 47.8247
+INFO:probs:Batch 1000, Avg Loss: 43.7879
+INFO:probs:Batch 1100, Avg Loss: 40.4847
+INFO:probs:Batch 1200, Avg Loss: 37.7300
+INFO:probs:Batch 1300, Avg Loss: 35.4014
+INFO:probs:Batch 1400, Avg Loss: 33.4052
+INFO:probs:Batch 1500, Avg Loss: 31.6731
+INFO:probs:Completed epoch 1/2, avg loss: 30.4049
+INFO:probs:Starting epoch 2/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 7.4200
+INFO:probs:Batch 200, Avg Loss: 7.4309
+INFO:probs:Batch 300, Avg Loss: 7.4393
+INFO:probs:Batch 400, Avg Loss: 7.4432
+INFO:probs:Batch 500, Avg Loss: 7.4409
+INFO:probs:Batch 600, Avg Loss: 7.4388
+INFO:probs:Batch 700, Avg Loss: 7.4377
+INFO:probs:Batch 800, Avg Loss: 7.4331
+INFO:probs:Batch 900, Avg Loss: 7.4352
+INFO:probs:Batch 1000, Avg Loss: 7.4345
+INFO:probs:Batch 1100, Avg Loss: 7.4350
+INFO:probs:Batch 1200, Avg Loss: 7.4359
+INFO:probs:Batch 1300, Avg Loss: 7.4370
+INFO:probs:Batch 1400, Avg Loss: 7.4396
+INFO:probs:Batch 1500, Avg Loss: 7.4420
+INFO:probs:Completed epoch 2/2, avg loss: 7.4386
+INFO:probs:Enhanced training completed.
+INFO:hyperparam_search:Dev Perplexity: 2164.94
+INFO:hyperparam_search:
+============================================================
+INFO:hyperparam_search:Configuration 7/8
+INFO:hyperparam_search:l2=0.1, dropout=0.2, batch_size=32, epochs=2
+INFO:hyperparam_search:============================================================
+INFO:probs:Start optimizing on 101287 training tokens with improved model...
+INFO:probs:Using Adam optimizer, dropout=0.2, batch_size=32
+INFO:probs:Starting epoch 1/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 255.0265
+INFO:probs:Batch 200, Avg Loss: 214.1947
+INFO:probs:Batch 300, Avg Loss: 180.4632
+INFO:probs:Batch 400, Avg Loss: 152.8920
+INFO:probs:Batch 500, Avg Loss: 130.1219
+INFO:probs:Batch 600, Avg Loss: 111.4735
+INFO:probs:Batch 700, Avg Loss: 96.7973
+INFO:probs:Batch 800, Avg Loss: 85.6666
+INFO:probs:Batch 900, Avg Loss: 77.0043
+INFO:probs:Batch 1000, Avg Loss: 70.0694
+INFO:probs:Batch 1100, Avg Loss: 64.3888
+INFO:probs:Batch 1200, Avg Loss: 59.6575
+INFO:probs:Batch 1300, Avg Loss: 55.6525
+INFO:probs:Batch 1400, Avg Loss: 52.2214
+INFO:probs:Batch 1500, Avg Loss: 49.2443
+INFO:probs:Batch 1600, Avg Loss: 46.6414
+INFO:probs:Batch 1700, Avg Loss: 44.3436
+INFO:probs:Batch 1800, Avg Loss: 42.3033
+INFO:probs:Batch 1900, Avg Loss: 40.4758
+INFO:probs:Batch 2000, Avg Loss: 38.8323
+INFO:probs:Batch 2100, Avg Loss: 37.3444
+INFO:probs:Batch 2200, Avg Loss: 35.9936
+INFO:probs:Batch 2300, Avg Loss: 34.7610
+INFO:probs:Batch 2400, Avg Loss: 33.6302
+INFO:probs:Batch 2500, Avg Loss: 32.5896
+INFO:probs:Batch 2600, Avg Loss: 31.6279
+INFO:probs:Batch 2700, Avg Loss: 30.7376
+INFO:probs:Batch 2800, Avg Loss: 29.9127
+INFO:probs:Batch 2900, Avg Loss: 29.1434
+INFO:probs:Batch 3000, Avg Loss: 28.4253
+INFO:probs:Batch 3100, Avg Loss: 27.7554
+INFO:probs:Completed epoch 1/2, avg loss: 27.3364
+INFO:probs:Starting epoch 2/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 7.6115
+INFO:probs:Batch 200, Avg Loss: 7.6112
+INFO:probs:Batch 300, Avg Loss: 7.6251
+INFO:probs:Batch 400, Avg Loss: 7.6286
+INFO:probs:Batch 500, Avg Loss: 7.6161
+INFO:probs:Batch 600, Avg Loss: 7.6093
+INFO:probs:Batch 700, Avg Loss: 7.6059
+INFO:probs:Batch 800, Avg Loss: 7.6011
+INFO:probs:Batch 900, Avg Loss: 7.5997
+INFO:probs:Batch 1000, Avg Loss: 7.6024
+INFO:probs:Batch 1100, Avg Loss: 7.6092
+INFO:probs:Batch 1200, Avg Loss: 7.6092
+INFO:probs:Batch 1300, Avg Loss: 7.6117
+INFO:probs:Batch 1400, Avg Loss: 7.6087
+INFO:probs:Batch 1500, Avg Loss: 7.6087
+INFO:probs:Batch 1600, Avg Loss: 7.6120
+INFO:probs:Batch 1700, Avg Loss: 7.6117
+INFO:probs:Batch 1800, Avg Loss: 7.6124
+INFO:probs:Batch 1900, Avg Loss: 7.6127
+INFO:probs:Batch 2000, Avg Loss: 7.6133
+INFO:probs:Batch 2100, Avg Loss: 7.6141
+INFO:probs:Batch 2200, Avg Loss: 7.6136
+INFO:probs:Batch 2300, Avg Loss: 7.6137
+INFO:probs:Batch 2400, Avg Loss: 7.6135
+INFO:probs:Batch 2500, Avg Loss: 7.6155
+INFO:probs:Batch 2600, Avg Loss: 7.6154
+INFO:probs:Batch 2700, Avg Loss: 7.6144
+INFO:probs:Batch 2800, Avg Loss: 7.6147
+INFO:probs:Batch 2900, Avg Loss: 7.6120
+INFO:probs:Batch 3000, Avg Loss: 7.6117
+INFO:probs:Batch 3100, Avg Loss: 7.6132
+INFO:probs:Completed epoch 2/2, avg loss: 7.6135
+INFO:probs:Enhanced training completed.
+INFO:hyperparam_search:Dev Perplexity: 2416.10
+INFO:hyperparam_search:
+============================================================
+INFO:hyperparam_search:Configuration 8/8
+INFO:hyperparam_search:l2=0.1, dropout=0.2, batch_size=64, epochs=2
+INFO:hyperparam_search:============================================================
+INFO:probs:Start optimizing on 101287 training tokens with improved model...
+INFO:probs:Using Adam optimizer, dropout=0.2, batch_size=64
+INFO:probs:Starting epoch 1/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 222.9024
+INFO:probs:Batch 200, Avg Loss: 179.1199
+INFO:probs:Batch 300, Avg Loss: 148.2684
+INFO:probs:Batch 400, Avg Loss: 124.0138
+INFO:probs:Batch 500, Avg Loss: 104.5372
+INFO:probs:Batch 600, Avg Loss: 89.0936
+INFO:probs:Batch 700, Avg Loss: 77.4763
+INFO:probs:Batch 800, Avg Loss: 68.7355
+INFO:probs:Batch 900, Avg Loss: 61.9412
+INFO:probs:Batch 1000, Avg Loss: 56.5055
+INFO:probs:Batch 1100, Avg Loss: 52.0575
+INFO:probs:Batch 1200, Avg Loss: 48.3495
+INFO:probs:Batch 1300, Avg Loss: 45.2113
+INFO:probs:Batch 1400, Avg Loss: 42.5224
+INFO:probs:Batch 1500, Avg Loss: 40.1937
+INFO:probs:Completed epoch 1/2, avg loss: 38.4824
+INFO:probs:Starting epoch 2/2, lr=0.001000
+INFO:probs:Batch 100, Avg Loss: 7.5919
+INFO:probs:Batch 200, Avg Loss: 7.5847
+INFO:probs:Batch 300, Avg Loss: 7.5810
+INFO:probs:Batch 400, Avg Loss: 7.5820
+INFO:probs:Batch 500, Avg Loss: 7.5846
+INFO:probs:Batch 600, Avg Loss: 7.5823
+INFO:probs:Batch 700, Avg Loss: 7.5789
+INFO:probs:Batch 800, Avg Loss: 7.5749
+INFO:probs:Batch 900, Avg Loss: 7.5728
+INFO:probs:Batch 1000, Avg Loss: 7.5731
+INFO:probs:Batch 1100, Avg Loss: 7.5746
+INFO:probs:Batch 1200, Avg Loss: 7.5743
+INFO:probs:Batch 1300, Avg Loss: 7.5718
+INFO:probs:Batch 1400, Avg Loss: 7.5728
+INFO:probs:Batch 1500, Avg Loss: 7.5749
+INFO:probs:Completed epoch 2/2, avg loss: 7.5742
+INFO:probs:Enhanced training completed.
+INFO:hyperparam_search:Dev Perplexity: 2442.23
+INFO:hyperparam_search:
+============================================================
+INFO:hyperparam_search:HYPERPARAMETER SEARCH COMPLETE
+INFO:hyperparam_search:============================================================
+INFO:hyperparam_search:Best parameters: {'l2': 0.01, 'dropout': 0.1, 'batch_size': 32, 'epochs': 2, 'dev_perplexity': 1888.285793962665}
+INFO:hyperparam_search:Best dev perplexity: 1888.29
+INFO:hyperparam_search:Results saved to: hyperparam_results.json

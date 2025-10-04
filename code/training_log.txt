@@ -1,0 +1,75 @@
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/home/kano/Documents/nlp-hw3/code/./train_lm.py", line 167, in <module>
+    main()
+  File "/home/kano/Documents/nlp-hw3/code/./train_lm.py", line 128, in main
+    torch.set_default_device(args.device)
+  File "/home/kano/.local/lib/python3.10/site-packages/torch/__init__.py", line 580, in set_default_device
+    _GLOBAL_DEVICE_CONTEXT = DeviceContext(device)
+  File "/home/kano/.local/lib/python3.10/site-packages/torch/utils/_device.py", line 56, in __init__
+    self.device = torch.device(device)
+/home/kano/.local/lib/python3.10/site-packages/torch/utils/_device.py:56: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:84.)
+  self.device = torch.device(device)
+INFO:probs:Read vocab of size 3439 from vocab-genspam.txt
+INFO:train_lm:Training...
+INFO:probs:=== Optimized Log-Linear Training on 101287 tokens ===
+INFO:probs:Config: dropout=0.15, batch_size=64, grad_accum=2, l2=0.01
+INFO:probs:Optimizer: AdamW | warmup=500 | label_smoothing=0.1
+INFO:probs:Total optimization steps: 1582
+INFO:probs:
+============================================================
+INFO:probs:Epoch 1/2
+INFO:probs:============================================================
+INFO:probs:Step 50/1582 | Batch 100 | Loss: 14727.9545 | LR: 0.000098
+INFO:probs:Step 100/1582 | Batch 200 | Loss: 14465.3428 | LR: 0.000198
+INFO:probs:Step 150/1582 | Batch 300 | Loss: 14075.8098 | LR: 0.000298
+INFO:probs:Step 200/1582 | Batch 400 | Loss: 13566.3735 | LR: 0.000398
+INFO:probs:Step 250/1582 | Batch 500 | Loss: 13031.0827 | LR: 0.000498
+INFO:probs:Step 300/1582 | Batch 600 | Loss: 12392.4200 | LR: 0.000598
+INFO:probs:Step 350/1582 | Batch 700 | Loss: 11743.0907 | LR: 0.000698
+INFO:probs:Step 400/1582 | Batch 800 | Loss: 11076.7841 | LR: 0.000798
+INFO:probs:Step 450/1582 | Batch 900 | Loss: 10430.9838 | LR: 0.000898
+INFO:probs:Step 500/1582 | Batch 1000 | Loss: 9799.9368 | LR: 0.000998
+INFO:probs:Step 550/1582 | Batch 1100 | Loss: 9202.2147 | LR: 0.000995
+INFO:probs:Step 600/1582 | Batch 1200 | Loss: 8637.0690 | LR: 0.000979
+INFO:probs:Step 650/1582 | Batch 1300 | Loss: 8106.3373 | LR: 0.000954
+INFO:probs:Step 700/1582 | Batch 1400 | Loss: 7616.6890 | LR: 0.000919
+INFO:probs:Step 750/1582 | Batch 1500 | Loss: 7167.0989 | LR: 0.000875
+INFO:probs:
+Epoch 1 complete: avg_loss=6826.3801
+INFO:probs:*** New best loss: 6826.3801 ***
+INFO:probs:
+============================================================
+INFO:probs:Epoch 2/2
+INFO:probs:============================================================
+INFO:probs:Step 841/1582 | Batch 100 | Loss: 564.7125 | LR: 0.000776
+INFO:probs:Step 891/1582 | Batch 200 | Loss: 532.1044 | LR: 0.000712
+INFO:probs:Step 941/1582 | Batch 300 | Loss: 512.0361 | LR: 0.000645
+INFO:probs:Step 991/1582 | Batch 400 | Loss: 498.6907 | LR: 0.000574
+INFO:probs:Step 1041/1582 | Batch 500 | Loss: 489.4649 | LR: 0.000501
+INFO:probs:Step 1091/1582 | Batch 600 | Loss: 482.1700 | LR: 0.000429
+INFO:probs:Step 1141/1582 | Batch 700 | Loss: 476.4259 | LR: 0.000358
+INFO:probs:Step 1191/1582 | Batch 800 | Loss: 471.7558 | LR: 0.000290
+INFO:probs:Step 1241/1582 | Batch 900 | Loss: 468.1814 | LR: 0.000227
+INFO:probs:Step 1291/1582 | Batch 1000 | Loss: 464.8032 | LR: 0.000169
+INFO:probs:Step 1341/1582 | Batch 1100 | Loss: 462.3173 | LR: 0.000118
+INFO:probs:Step 1391/1582 | Batch 1200 | Loss: 460.1657 | LR: 0.000076
+INFO:probs:Step 1441/1582 | Batch 1300 | Loss: 458.3293 | LR: 0.000042
+INFO:probs:Step 1491/1582 | Batch 1400 | Loss: 456.8005 | LR: 0.000018
+INFO:probs:Step 1541/1582 | Batch 1500 | Loss: 455.2921 | LR: 0.000004
+INFO:probs:
+Epoch 2 complete: avg_loss=454.1904
+INFO:probs:*** New best loss: 454.1904 ***
+INFO:probs:
+============================================================
+INFO:probs:Training complete! Best loss: 454.1904
+INFO:probs:============================================================
+INFO:probs:Saving model to optimized_loglinear.model
