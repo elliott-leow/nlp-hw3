@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""
-Classifies text files using two language models and Bayes' theorem.
-"""
+'''
+classified text files
+'''
 import argparse
 import logging
 import math
@@ -90,10 +90,6 @@ def main():
     args = parse_args()
     logging.basicConfig(level=args.logging_level)
 
-    #sanity check prior probability
-    if not (0.0 <= args.prior1 <= 1.0):
-        log.critical("Prior probability must be between 0.0 and 1.0")
-        sys.exit(1)
     
     prior2 = 1.0 - args.prior1
 
@@ -112,14 +108,8 @@ def main():
             exit(1)
     torch.set_default_device(args.device)
         
-    log.info("Loading models...")
     lm1 = LanguageModel.load(args.model1, device=args.device)
     lm2 = LanguageModel.load(args.model2, device=args.device)
-    
-    #sanity check that both models have same vocabulary
-    if lm1.vocab != lm2.vocab:
-        log.critical("Both language models must have the same vocabulary")
-        sys.exit(1)
     
     #classify each file
     model1_count = 0
@@ -143,13 +133,13 @@ def main():
             print(f"{args.model2}\t{file}")
             model2_count += 1
     
-    #print summary
+    #summary
     total_files = len(args.test_files)
     if total_files > 0:
         model1_percent = (model1_count / total_files) * 100
         model2_percent = (model2_count / total_files) * 100
-        print(f"{model1_count} files were more probably from {args.model1} ({model1_percent:.2f}%)")
-        print(f"{model2_count} files were more probably from {args.model2} ({model2_percent:.2f}%)")
+        print(f"{model1_count} files classfied as {args.model1} ({model1_percent:.2f}%)")
+        print(f"{model2_count} files classfied as {args.model2} ({model2_percent:.2f}%)")
 
 
 if __name__ == "__main__":

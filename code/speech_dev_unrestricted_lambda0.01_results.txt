@@ -1,0 +1,46 @@
+0.400	speech021	i said i'm getting old
+1.000	speech022	yeah
+1.000	speech023	uh_huh
+0.136	speech024	i i'd you know i think that we have a bunch of elderly folks in the country that could do some calls
+0.000	speech025	yeah
+0.364	speech026	but i believe we office all right here at home
+0.375	speech027	and and then perhaps even a six months or overseas it gives a much brother although
+0.000	speech028	oh no
+0.714	speech029	i'm not uh too boring
+0.000	speech030	yeah
+0.667	speech031	so it's collected [astray] oh
+0.364	speech032	but then i get tired doing that maybe start [jogged] and go out it's report nights a week
+0.421	speech033	i really need to get on a regular type programs is the thing in consistent it's
+0.200	speech034	that was very helpful
+1.000	speech035	uh_huh
+1.000	speech036	uh_huh
+0.375	speech037	and then i had an exercise bike
+0.455	speech038	and i got rid of that because i didn't
+0.000	speech039	yeah
+1.000	speech040	yeah
+0.000	speech041	yeah
+0.625	speech042	do you any injuries in jonathan
+0.833	speech043	so and so and and how they say that it seems uh_huh
+1.000	speech044	um
+0.400	speech045	i think every day
+1.000	speech046	well and wild
+0.500	speech047	it's partially um less than two months ago
+0.000	speech048	okay
+0.846	speech049	anything to me months older it'll crime
+1.000	speech050	that's what made it probably does of themselves or crowded
+0.000	speech051	well
+0.000	speech052	yeah
+0.375	speech053	or in some of them are sort of are aren't they can't do anything good for society
+0.000	speech054	i don't think so either
+0.308	speech055	and i think that's the basic is they have no morals anymore
+0.600	speech056	no jobs anymore
+0.667	speech057	and then go
+0.833	speech058	they come to the city duty whatever
+0.500	speech059	now how the office and i don't know
+0.375	speech060	i don't think it is the the solution
+
+============================================================
+summary statistics:
+total utterances: 40
+average word error rate: 0.4833 (48.33%)
+============================================================

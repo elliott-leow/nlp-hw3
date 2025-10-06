@@ -1,0 +1,53 @@
+INFO:speechrec:loading language model from switchboard-full-lambda0.012.model
+INFO:probs:Loading model from switchboard-full-lambda0.012.model
+INFO:probs:Loaded model from switchboard-full-lambda0.012.model
+INFO:speechrec:model loaded: vocab size = 11419
+INFO:speechrec:
+processing 40 utterances...
+INFO:speechrec:speech recognition complete!
+0.167	easy021	and so i really don't ever get a program up consistently
+0.143	easy022	i usually enjoy the exercise that do
+0.200	easy023	but uh like i said i'm just not very consistent about maintaining uh programs
+0.200	easy024	but uh that gets old doing very short order
+0.125	easy025	i found that to be a very helpful
+0.000	easy026	i think i can agree with that too
+0.462	easy027	so economical people want to do the right thing
+0.333	easy028	and they keep saying more money from that
+0.111	easy029	but i remember even when i was growing up
+0.000	easy030	i remember when i was growing up
+0.125	easy031	did you do it then that was it
+0.167	easy032	i don't know if you've seen
+0.143	easy033	and it all the normal people go
+0.037	easy034	i've i've had mixed emotions i guess when i listen to uh the radio and and watch t v about the different uh things that happening
+0.227	easy035	but on the same token and um i went on for just the gotten just because i wanted the right to do that
+0.167	easy036	um the ammunition is probably sold i'm afraid to use it
+0.125	easy037	takes two weeks for that system to process of your request for uh not as a gun prevent but but to buy ammunition
+0.059	easy038	have to get a permit from the police station in your local area to do that
+0.143	easy039	in other words you don't have a need to go buy a gun to go to the next day
+0.250	easy040	they're both in the same kind of job
+0.833	easy041	but so that's what what the
+0.091	easy042	uh there's an annual membership the uh that's that's fairly high
+0.125	easy043	well i think got down here in texas they don't have a waiting period on change
+0.077	easy044	uh i don't know if i'll ever use it you know i'm like
+0.125	easy045	i've never heard of anything like that
+0.143	easy046	the criminals they are going to get the guns in one way or the other
+0.167	easy047	he belong to one awhile back
+0.167	easy048	uh that's what uh my husband
+0.062	easy049	but uh uh i don't know if it's their proposal are one's being seriously kicked around
+0.000	easy050	i don't think it's a bad idea
+0.143	easy051	i was dead set against it
+0.176	easy052	and still i ended up going to semesters when i got out just got my degree
+0.000	easy053	but i've been in school ever since
+0.259	easy054	all these all these all this money they were throwing way paid people go out and do things when we're paying all these welfare [recipients]
+0.000	easy055	my next door neighbor when i was growing up worked for the unemployment division
+0.125	easy056	back back in those days they also used to give you uh booklets good for uh closing and gas and things like this
+0.167	easy057	and i'm i i have a hard time doing with that
+0.222	easy058	and and there's there's probably you theirs easily probably six or seven times that amount being spent on the bureaucracy
+0.286	easy059	you know it's just just totally ridiculous
+0.143	easy060	i mean i i i uh started out when i first got in graduate school
+
+============================================================
+summary statistics:
+total utterances: 40
+average word error rate: 0.1624 (16.24%)
+============================================================

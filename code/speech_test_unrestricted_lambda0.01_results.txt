@@ -1,0 +1,112 @@
+0.370	speech061	of the economy is down people uh you know the the little made out of poland get more of the i guess the bulk of it
+0.227	speech062	but on the same token and um i went on for just the gotten just because i wanted the right to do that
+0.000	speech063	uh_huh
+1.000	speech064	uh_huh
+0.250	speech065	they're both in the same kind of job
+0.231	speech066	i think you could recover from a pistol but not for sure
+1.000	speech067	well
+0.415	speech068	in fact i'd like to see some public [hygiene] the legislation and so not only when you buy a weapon you have to uh show that you're going to school system [classed] know how they you know what weapon
+1.000	speech069	i might want to
+0.667	speech070	and he was in that kind of those done that
+0.200	speech071	i never thought of that
+0.000	speech072	yeah
+0.125	speech073	back back in those days they also used to give you uh booklets good for uh closing and gas and things like this
+0.286	speech074	you know it's just just totally ridiculous
+0.167	speech075	one and five americans can't read
+0.818	speech076	that's true military to a lot
+0.000	speech077	yeah
+0.000	speech078	that's pretty good
+0.000	speech079	i mean
+0.000	speech080	no doubt
+0.000	speech081	yeah
+0.000	speech082	and i really enjoyed that
+0.917	speech083	that will be involved are taught in the case
+0.596	speech084	it would try teaching good guy uses you know we we going to get the upper level school that are two two ways you can play football or basketball that's important knock you can read a writer do or that that's that's fine you know
+0.000	speech085	yes
+0.800	speech086	what's what happened
+0.133	speech087	what gets me is i can't believe that congress uh our our state legislature can't come up with uh some kind of workable means to have on the school
+0.000	speech088	and uh
+0.833	speech089	uh of of what goes away poodle
+0.250	speech090	the uh the women needed someone to baby sit
+0.000	speech091	yeah
+0.714	speech092	just been one on one
+0.000	speech093	i'm from berkeley california
+0.000	speech094	well i i live in an apartment building
+0.417	speech095	i got my mom what [teacup] the last too long ago
+1.333	speech096	well course you are
+0.294	speech097	i used to [airless] that could read any better to the human being in my life
+0.474	speech098	and she knew went there to to get quietly come up to the year to get to run in and not me
+0.273	speech099	because they went through the public school system in boston
+0.143	speech100	i guess i like there are some real basics that are missing from education
+0.000	speech101	uh_huh
+0.400	speech102	they're people that come in you know every day to son applications
+0.000	speech103	and um i i really felt like i've been working now for about four years
+0.222	speech104	but um and private school you could do that
+1.000	speech105	yeah
+0.000	speech106	huh
+0.000	speech107	yeah
+0.625	speech108	i don't think you're going to school
+0.000	speech109	uh_huh
+0.000	speech110	yeah
+0.000	speech111	oh really
+0.000	speech112	yeah
+0.000	speech113	yeah
+0.154	speech114	but other than just nothing up there like it is down here
+0.000	speech115	probably
+0.250	speech116	it it varies
+0.250	speech117	and that's mostly blast
+0.778	speech118	they call a couple hundred a day
+0.875	speech119	that's going bike uh whatever got into triple that
+0.000	speech120	uh_huh
+0.000	speech121	yeah
+1.000	speech122	okay
+1.000	speech123	uh_huh
+0.556	speech124	it it's not not total just recall
+0.500	speech125	uh we we seem to have a higher answer rain up here now
+0.167	speech126	and having all kinds of [sect]
+1.000	speech127	but you know have only been here at our country and i think that's right
+0.077	speech128	well what can we do about the the the air conditioning problem
+0.333	speech129	so uh in some of the areas in in texas seam poor
+0.500	speech130	that's right
+0.000	speech131	uh probably the biggest thing we've got going now is the robbery
+0.667	speech132	i bet you
+0.000	speech133	i live in a little suburb uh which is i guess from dallas is twelve miles or so
+0.500	speech134	still still stock house and the the teacher pattern and then go from there
+0.324	speech135	uh you get a few of the turtle bit [sloppier] uh just taking the you know just don't items that they think you get ten to twenty bucks for real quick
+0.625	speech136	great you know [kiddy] any any stuff
+0.467	speech137	you know if they're overcrowded just the credit and heard kelly just [suffocate]
+0.000	speech138	i live out in the country
+1.000	speech139	uh_huh
+1.000	speech140	i did
+0.000	speech141	uh_huh
+0.000	speech142	yeah
+0.429	speech143	but the little boy was five years old son was in college then after that
+0.333	speech144	i mean
+0.267	speech145	and and i eat a lot of people say that they needed for protection off
+0.375	speech146	uh how how old you know if he's got one
+0.000	speech147	that's right
+0.208	speech148	and uh the the interesting scale of they assigned it uh the one being a bands and and being know regulations are totally free
+0.286	speech149	so the world's most [pleasurable] thing
+0.167	speech150	so i have shot variety of guns are a number of years
+0.500	speech151	well they've uh a lot of hard issue lot of hard feeling about it
+2.000	speech152	well i
+0.500	speech153	what's your surprise it's too late
+0.500	speech154	so i went sure have [credible] a lot
+0.750	speech155	where do you know you know
+1.500	speech156	carolina [rein] age
+0.000	speech157	oh yeah
+0.750	speech158	it used to go ahead
+0.000	speech159	oh is that right
+1.000	speech160	['vette]
+0.000	speech161	so
+0.786	speech162	and uh i mean there were there in the uh joint not feel
+0.375	speech163	i mean there as long as the football field practically and all that stuff and [diameter]
+0.538	speech164	people come in and how uh they were surprised how [smock] would work
+0.364	speech165	him off you have a satellite dish or not
+0.000	speech166	we don't
+
+============================================================
+summary statistics:
+total utterances: 106
+average word error rate: 0.3758 (37.58%)
+============================================================

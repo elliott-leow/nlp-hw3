@@ -580,23 +580,15 @@ class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
 
 #todo
 class ImprovedLogLinearLanguageModel(EmbeddingLogLinearLanguageModel):
-    """
-    optimized log-linear model (still f(x,y,z) = x^T X z + y^T Y z) with:
-    - bias terms for better expressiveness
-    - better initialization (Xavier uniform)
-    - AdamW optimizer with weight decay
-    - learning rate warmup and cosine annealing
-    - label smoothing for generalization
-    - gradient accumulation for stability
-    - embedding normalization
-    - smart regularization (only on weights, not biases)
-    """
+    """extended log-linear model with more features"""
     
     def __init__(self, vocab: Vocab, lexicon_file: Path, l2: float, epochs: int, 
                  dropout: float = 0.15, batch_size: int = 64, 
                  label_smoothing: float = 0.1,
                  warmup_steps: int = 500, grad_accum_steps: int = 2) -> None:
         super().__init__(vocab, lexicon_file, l2, epochs)
+        
+        vocab_size = len(self.vocab_list)
         
         #hyperparameters
         self.dropout_rate = dropout
@@ -605,67 +597,164 @@ class ImprovedLogLinearLanguageModel(EmbeddingLogLinearLanguageModel):
         self.warmup_steps = warmup_steps
         self.grad_accum_steps = grad_accum_steps
         
-        #dropout for embeddings during training
+        #dropout for embeddings
         self.dropout = nn.Dropout(p=dropout)
         
-        #bias vectors for X and Y transformations (still log-linear)
-        self.bias_x = nn.Parameter(torch.zeros(len(self.vocab_list)), requires_grad=True)
-        self.bias_y = nn.Parameter(torch.zeros(len(self.vocab_list)), requires_grad=True)
+        #bias terms
+        self.bias_x = nn.Parameter(torch.zeros(vocab_size), requires_grad=True)
+        self.bias_y = nn.Parameter(torch.zeros(vocab_size), requires_grad=True)
         
-        #initialize parameters
+        #unigram indicator features: one weight per vocab word
+        self.unigram_weights = nn.Parameter(torch.zeros(vocab_size), requires_grad=True)
+        
+        #unigram embedding features: direct z embedding projection
+        self.unigram_u = nn.Parameter(torch.zeros(self.dim), requires_grad=True)
+        
+        #trigram embedding features: low-rank tensor for xyz interaction
+        self.trigram_rank = min(20, self.dim)
+        self.T_left = nn.Parameter(torch.zeros((self.dim, self.trigram_rank)), requires_grad=True)
+        
+        #spelling features: suffixes, prefixes, caps, digits, etc
+        self.suffixes = ['-ing', '-ed', '-s', '-ly', '-er', '-est', '-tion', '-ness', '-ment', '-ity']
+        self.prefixes = ['un-', 're-', 'in-', 'dis-', 'en-', 'non-', 'pre-', 'mis-']
+        n_spell_features = len(self.suffixes) + len(self.prefixes) + 5
+        self.spell_weights = nn.Parameter(torch.zeros(n_spell_features), requires_grad=True)
+        self._spelling_cache = {}
+        
+        #repetition features: check if z in recent history
+        self.repetition_windows = [2, 5, 10, 20]
+        self.repetition_weights = nn.Parameter(torch.zeros(len(self.repetition_windows)), requires_grad=True)
+        self.word_history: List[Wordtype] = []
+        
+        #initialize all parameters
         self._initialize_parameters()
         
         #cache for embeddings
         self.embedding_cache = None
         
     def _initialize_parameters(self):
-        """initialize parameters with Xavier/Glorot initialization"""
-        #Xavier uniform for transformation matrices
+        """initialize parameters"""
+        #xavier uniform for matrices
         nn.init.xavier_uniform_(self.X)
         nn.init.xavier_uniform_(self.Y)
+        nn.init.xavier_uniform_(self.T_left)
         
-        #small random init for biases
+        #small random init for biases and unigram features
         nn.init.uniform_(self.bias_x, -0.01, 0.01)
         nn.init.uniform_(self.bias_y, -0.01, 0.01)
+        nn.init.uniform_(self.unigram_weights, -0.01, 0.01)
+        nn.init.uniform_(self.unigram_u, -0.01, 0.01)
+        nn.init.uniform_(self.spell_weights, -0.01, 0.01)
+        nn.init.uniform_(self.repetition_weights, 0.0, 0.1)
     
     def get_all_embeddings(self) -> torch.Tensor:
-        """get embeddings for all vocab words (cached for efficiency)"""
+        """get embeddings for all vocab words"""
         if self.embedding_cache is None:
             z_embeddings = torch.stack([self.get_embedding(z) for z in self.vocab_list])
             self.embedding_cache = z_embeddings
         return self.embedding_cache
     
-    def logits(self, x: Wordtype, y: Wordtype) -> Float[torch.Tensor,"vocab"]:
-        """log-linear model: f(x,y,z) = x^T X z + y^T Y z + bias_x + bias_y"""
+    def _get_spelling_features(self, word: Wordtype) -> torch.Tensor:
+        """extract spelling features for a word"""
+        if word in self._spelling_cache:
+            return self._spelling_cache[word]
         
-        #get embeddings for context words x and y
-        x_emb = self.get_embedding(x)  #(dim,)
-        y_emb = self.get_embedding(y)  #(dim,)
+        features = []
+        word_lower = word.lower()
+        
+        #suffix features
+        for suffix in self.suffixes:
+            features.append(1.0 if word_lower.endswith(suffix) else 0.0)
+        
+        #prefix features  
+        for prefix in self.prefixes:
+            features.append(1.0 if word_lower.startswith(prefix) else 0.0)
+        
+        #additional features
+        features.append(1.0 if word[0].isupper() else 0.0)
+        features.append(1.0 if word.isupper() else 0.0)
+        features.append(1.0 if any(c.isdigit() for c in word) else 0.0)
+        features.append(1.0 if '-' in word else 0.0)
+        features.append(float(len(word)) / 20.0)
+        
+        feat_tensor = torch.tensor(features, dtype=torch.float32)
+        self._spelling_cache[word] = feat_tensor
+        return feat_tensor
+    
+    def _get_repetition_features(self, z: Wordtype, history: List[Wordtype]) -> torch.Tensor:
+        """check if word z appeared in recent history"""
+        features = []
+        for window_size in self.repetition_windows:
+            recent = history[-window_size:] if len(history) >= window_size else history
+            features.append(1.0 if z in recent else 0.0)
+        return torch.tensor(features, dtype=torch.float32)
+    
+    def logits(self, x: Wordtype, y: Wordtype, history: Optional[List[Wordtype]] = None) -> Float[torch.Tensor,"vocab"]:
+        """extended log-linear model with multiple feature types"""
+        
+        #get embeddings
+        x_emb = self.get_embedding(x)
+        y_emb = self.get_embedding(y)
         
         #apply dropout during training
         if self.training:
             x_emb = self.dropout(x_emb)
             y_emb = self.dropout(y_emb)
         
-        #get all target embeddings
-        z_embeddings = self.get_all_embeddings()  #(vocab_size, dim)
+        z_embeddings = self.get_all_embeddings()
         
-        #compute log-linear scores: x^T X z for all z
-        #(x @ X) gives (dim,), then @ z_embeddings.T gives (vocab_size,)
-        term1 = (x_emb @ self.X) @ z_embeddings.T  #(vocab_size,)
-        term1 = term1 + self.bias_x  #add bias
-        
-        #compute log-linear scores: y^T Y z for all z
-        term2 = (y_emb @ self.Y) @ z_embeddings.T  #(vocab_size,)
-        term2 = term2 + self.bias_y  #add bias
-        
-        #sum both terms (still log-linear)
+        #original bigram and skip-bigram features
+        term1 = (x_emb @ self.X) @ z_embeddings.T + self.bias_x
+        term2 = (y_emb @ self.Y) @ z_embeddings.T + self.bias_y
         logits = term1 + term2
+        
+        #unigram indicator features
+        logits = logits + self.unigram_weights
+        
+        #unigram embedding features
+        logits = logits + (z_embeddings @ self.unigram_u)
+        
+        #trigram embedding features as low-rank xyz interaction
+        x_proj = x_emb @ self.T_left
+        y_proj = y_emb @ self.T_left
+        xy_combined = x_proj * y_proj
+        z_proj = z_embeddings @ self.T_left
+        trigram_scores = z_proj @ xy_combined
+        logits = logits + trigram_scores
+        
+        #spelling features
+        spell_scores = torch.zeros(len(self.vocab_list))
+        for i, z_word in enumerate(self.vocab_list):
+            spell_feat = self._get_spelling_features(z_word)
+            spell_scores[i] = spell_feat @ self.spell_weights
+        logits = logits + spell_scores
+        
+        #repetition features
+        if history is not None:
+            rep_scores = torch.zeros(len(self.vocab_list))
+            for i, z_word in enumerate(self.vocab_list):
+                rep_feat = self._get_repetition_features(z_word, history)
+                rep_scores[i] = rep_feat @ self.repetition_weights
+            logits = logits + rep_scores
         
         return logits
     
+    def log_prob(self, x: Wordtype, y: Wordtype, z: Wordtype) -> float:
+        """compute log probability with extended features"""
+        #update history for repetition features
+        self.word_history.append(y)
+        if len(self.word_history) > max(self.repetition_windows):
+            self.word_history.pop(0)
+        
+        #compute with history
+        with torch.no_grad():
+            logits = self.logits(x, y, history=self.word_history)
+            log_probs = torch.log_softmax(logits, dim=0)
+            z_idx = self.word_to_idx[z]
+            return log_probs[z_idx].item()
+    
     def label_smoothing_loss(self, logits: torch.Tensor, target_idx: int) -> torch.Tensor:
-        """compute label smoothing loss for better generalization"""
+        """compute label smoothing loss"""
         vocab_size = len(self.vocab_list)
         
         #compute log probabilities
@@ -675,7 +764,7 @@ class ImprovedLogLinearLanguageModel(EmbeddingLogLinearLanguageModel):
         confidence = 1.0 - self.label_smoothing
         smooth_value = self.label_smoothing / (vocab_size - 1)
         
-        #true target gets (1 - smoothing), others get smoothing/(V-1)
+        #true target gets (1-smoothing), others get smoothing/(V-1)
         target_log_prob = log_probs[target_idx]
         smooth_loss = -torch.sum(log_probs) * smooth_value
         
@@ -695,29 +784,29 @@ class ImprovedLogLinearLanguageModel(EmbeddingLogLinearLanguageModel):
             return 0.5 * (1.0 + math.cos(math.pi * progress))
     
     def train(self, file: Path):  
-        """highly optimized training with SOTA techniques"""
+        """training with extended features"""
         
-        #use AdamW optimizer with decoupled weight decay
+        #adamw optimizer
         base_lr = 0.001
         optimizer = optim.AdamW(self.parameters(), lr=base_lr, 
                                betas=(0.9, 0.999), eps=1e-8,
-                               weight_decay=0.0)  #handle weight decay manually
+                               weight_decay=self.l2)
         
-        #set model to training mode for dropout
+        #set model to training mode
         self.train_mode = True
         
         N = num_tokens(file)
-        log.info(f"=== Optimized Log-Linear Training on {N} tokens ===")
+        log.info(f"=== Extended Log-Linear Training on {N} tokens ===")
         log.info(f"Config: dropout={self.dropout_rate}, batch_size={self.batch_size}, "
                 f"grad_accum={self.grad_accum_steps}, l2={self.l2}")
-        log.info(f"Optimizer: AdamW | warmup={self.warmup_steps} | label_smoothing={self.label_smoothing}")
+        log.info(f"Features: unigram indicators+embeddings, trigram embeddings, spelling, repetition")
         
-        #load and shuffle all trigrams once
+        #load and shuffle trigrams
         import random
         trigrams = list(read_trigrams(file, self.vocab))
         
         total_steps = (len(trigrams) // (self.batch_size * self.grad_accum_steps)) * self.epochs
-        log.info(f"Total optimization steps: {total_steps}")
+        log.info(f"Total steps: {total_steps}")
         
         global_step = 0
         best_loss = float('inf')
@@ -734,29 +823,37 @@ class ImprovedLogLinearLanguageModel(EmbeddingLogLinearLanguageModel):
             batch_count = 0
             optimizer.zero_grad()
             
+            #track history for repetition features
+            history_track = []
+            
             for i in range(0, len(trigrams), self.batch_size):
                 batch_trigrams = trigrams[i:i + self.batch_size]
-                
                 batch_loss = 0.0
                 
-                #process each trigram in the batch
+                #process each trigram in batch
                 for trigram in batch_trigrams:
                     x, y, z = trigram
                     
-                    #forward pass with label smoothing
-                    logits = self.logits(x, y)
+                    #build history from recent context
+                    recent_history = history_track[-20:] if history_track else []
+                    
+                    #forward pass with extended features
+                    logits = self.logits(x, y, history=recent_history)
                     z_idx = self.word_to_idx[z]
                     
-                    #use label smoothing loss
+                    #label smoothing loss
                     loss = self.label_smoothing_loss(logits, z_idx)
-                    
-                    #scale loss by gradient accumulation steps
                     loss = loss / self.grad_accum_steps
                     
                     #backward pass
                     loss.backward()
                     
                     batch_loss += loss.item() * self.grad_accum_steps
+                    
+                    #update history
+                    history_track.append(z)
+                    if len(history_track) > 40:
+                        history_track.pop(0)
                 
                 #update after accumulating gradients
                 if (batch_count + 1) % self.grad_accum_steps == 0:
@@ -765,14 +862,8 @@ class ImprovedLogLinearLanguageModel(EmbeddingLogLinearLanguageModel):
                     for param_group in optimizer.param_groups:
                         param_group['lr'] = base_lr * lr_mult
                     
-                    #gradient clipping for stability
+                    #gradient clipping
                     torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
-                    
-                    #apply L2 regularization manually (only on X and Y matrices, not biases)
-                    if self.l2 > 0:
-                        for name, param in self.named_parameters():
-                            if param.requires_grad and 'bias' not in name:
-                                param.data.add_(param.data, alpha=-self.l2 * base_lr * lr_mult)
                     
                     #update parameters
                     optimizer.step()

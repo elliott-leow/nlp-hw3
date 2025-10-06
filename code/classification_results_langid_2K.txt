@@ -1,0 +1,15 @@
+INFO:probs:Loading model from en-2K.model
+Traceback (most recent call last):
+  File "/home/kano/Documents/nlp-hw3/code/./textcat.py", line 146, in <module>
+    main()
+  File "/home/kano/Documents/nlp-hw3/code/./textcat.py", line 111, in main
+    lm1 = LanguageModel.load(args.model1, device=args.device)
+  File "/home/kano/Documents/nlp-hw3/code/probs.py", line 241, in load
+    model = torch.load(model_path, map_location=device)
+  File "/home/kano/.local/lib/python3.10/site-packages/torch/serialization.py", line 791, in load
+    with _open_file_like(f, 'rb') as opened_file:
+  File "/home/kano/.local/lib/python3.10/site-packages/torch/serialization.py", line 271, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+  File "/home/kano/.local/lib/python3.10/site-packages/torch/serialization.py", line 252, in __init__
+    super().__init__(open(name, mode))
+FileNotFoundError: [Errno 2] No such file or directory: 'en-2K.model'
