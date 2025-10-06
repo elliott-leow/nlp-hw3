@@ -1,0 +1,10 @@
+INFO:probs:Read vocab of size 3439 from vocab-genspam.txt
+INFO:train_lm:Training...
+INFO:probs:=== Extended Log-Linear Training on 101287 tokens ===
+INFO:probs:Config: dropout=0.1, batch_size=512, grad_accum=1, l2=0.01
+INFO:probs:Features: unigram indicators+embeddings, trigram embeddings, spelling, repetition
+INFO:probs:Total steps: 197
+INFO:probs:
+============================================================
+INFO:probs:Epoch 1/1
+INFO:probs:============================================================

@@ -15,15 +15,27 @@ from probs import read_vocab, EmbeddingLogLinearLanguageModel, read_trigrams
 
 log = logging.getLogger(Path(__file__).stem)
 
-def compute_cross_entropy(model, file: Path) -> float:
-    """Compute cross-entropy (bits per token) of the model on a file."""
+def compute_cross_entropy(model, path: Path) -> float:
+    """Compute cross-entropy (bits per token) of the model on a file or directory of files."""
     log_prob_sum = 0.0
     token_count = 0
     
-    for (x, y, z) in read_trigrams(file, model.vocab):
-        log_prob = model.log_prob(x, y, z)
-        log_prob_sum += log_prob
-        token_count += 1
+    # If path is a directory, process all .txt files in it
+    if path.is_dir():
+        files = sorted(path.glob("*.txt"))
+        if not files:
+            raise ValueError(f"No .txt files found in directory: {path}")
+        for file in files:
+            for (x, y, z) in read_trigrams(file, model.vocab):
+                log_prob = model.log_prob(x, y, z)
+                log_prob_sum += log_prob
+                token_count += 1
+    else:
+        # Process single file
+        for (x, y, z) in read_trigrams(path, model.vocab):
+            log_prob = model.log_prob(x, y, z)
+            log_prob_sum += log_prob
+            token_count += 1
     
     # Cross-entropy in bits per token = -average log2 probability
     avg_log_prob = log_prob_sum / token_count
