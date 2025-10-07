@@ -588,7 +588,7 @@ class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
                 if trigram_count % 100 == 0:
                     msg = f"Tokens seen: {trigram_count}/{total_trigrams}"
                     log.info(msg)
-                    print(msg)  # Also print to stdout for visibility
+                    print(msg)
             
             log.info(f"Completed epoch {epoch + 1}/{self.epochs}")
     
@@ -623,31 +623,38 @@ class ImprovedLogLinearLanguageModel(EmbeddingLogLinearLanguageModel):
         
         vocab_size = len(self.vocab_list)
         
-        #additional feature parameters
-        #bias terms for x and y context
-        self.bias_x = nn.Parameter(torch.zeros(vocab_size), requires_grad=True)
-        self.bias_y = nn.Parameter(torch.zeros(vocab_size), requires_grad=True)
+        #global bias term (replaces redundant bias_x + bias_y)
+        self.bias = nn.Parameter(torch.zeros(vocab_size), requires_grad=True)
         
-        #unigram indicator features
+        #unigram indicator features for output word
         self.unigram_weights = nn.Parameter(torch.zeros(vocab_size), requires_grad=True)
         
-        #unigram embedding projection
+        #word-specific context biases (vocab_size -> 1 mapping for each context word)
+        self.x_word_bias = nn.Parameter(torch.zeros(vocab_size), requires_grad=True)
+        self.y_word_bias = nn.Parameter(torch.zeros(vocab_size), requires_grad=True)
+        
+        #unigram embedding projection for output word
         self.U = nn.Parameter(torch.zeros(self.dim), requires_grad=True)
         
-        #trigram interaction via low-rank tensor
-        self.trigram_rank = min(10, self.dim)
-        self.T_x = nn.Parameter(torch.zeros((self.dim, self.trigram_rank)), requires_grad=True)
-        self.T_y = nn.Parameter(torch.zeros((self.dim, self.trigram_rank)), requires_grad=True)
-        self.T_z = nn.Parameter(torch.zeros((self.dim, self.trigram_rank)), requires_grad=True)
+        #bigram context interaction (x and y interact before combining with z)
+        self.context_rank = min(8, self.dim)
+        self.C_x = nn.Parameter(torch.zeros((self.dim, self.context_rank)), requires_grad=True)
+        self.C_y = nn.Parameter(torch.zeros((self.dim, self.context_rank)), requires_grad=True)
+        self.C_out = nn.Parameter(torch.zeros((self.context_rank, self.dim)), requires_grad=True)
         
-        #initialize new parameters
-        nn.init.uniform_(self.bias_x, -0.01, 0.01)
-        nn.init.uniform_(self.bias_y, -0.01, 0.01)
+        #skip-gram feature (x directly with z, skipping y)
+        self.Z = nn.Parameter(torch.zeros((self.dim, self.dim)), requires_grad=True)
+        
+        #initialize parameters
+        nn.init.uniform_(self.bias, -0.01, 0.01)
         nn.init.uniform_(self.unigram_weights, -0.01, 0.01)
+        nn.init.uniform_(self.x_word_bias, -0.01, 0.01)
+        nn.init.uniform_(self.y_word_bias, -0.01, 0.01)
         nn.init.uniform_(self.U, -0.01, 0.01)
-        nn.init.xavier_uniform_(self.T_x)
-        nn.init.xavier_uniform_(self.T_y)
-        nn.init.xavier_uniform_(self.T_z)
+        nn.init.xavier_uniform_(self.C_x)
+        nn.init.xavier_uniform_(self.C_y)
+        nn.init.xavier_uniform_(self.C_out)
+        nn.init.xavier_uniform_(self.Z)
         
     def logits(self, x: Wordtype, y: Wordtype) -> Float[torch.Tensor,"vocab"]:
         #compute logits with additional features
@@ -662,21 +669,30 @@ class ImprovedLogLinearLanguageModel(EmbeddingLogLinearLanguageModel):
         term2 = (y_emb @ self.Y) @ z_embeddings.T
         logits = term1 + term2
         
-        #add bias terms
-        logits = logits + self.bias_x + self.bias_y
+        #global bias
+        logits = logits + self.bias
         
-        #add unigram indicator features
+        #unigram indicator features
         logits = logits + self.unigram_weights
         
-        #add unigram embedding features: z^T U
+        #unigram embedding features: z^T U
         logits = logits + (z_embeddings @ self.U)
         
-        #add trigram features: sum_r (x^T T_x)_r * (y^T T_y)_r * (z^T T_z)_r
-        x_proj = x_emb @ self.T_x  #(trigram_rank,)
-        y_proj = y_emb @ self.T_y  #(trigram_rank,)
-        z_proj = z_embeddings @ self.T_z  #(vocab_size, trigram_rank)
-        trigram_scores = z_proj @ (x_proj * y_proj)  #(vocab_size,)
-        logits = logits + trigram_scores
+        #word-specific context biases
+        x_idx = self.word_to_idx.get(x, self.word_to_idx.get(OOV, 0))
+        y_idx = self.word_to_idx.get(y, self.word_to_idx.get(OOV, 0))
+        logits = logits + self.x_word_bias[x_idx] + self.y_word_bias[y_idx]
+        
+        #bigram context interaction: (x^T C_x) * (y^T C_y) combined with z
+        x_context = x_emb @ self.C_x  #(context_rank,)
+        y_context = y_emb @ self.C_y  #(context_rank,)
+        xy_interaction = x_context * y_context  #(context_rank,)
+        context_feature = xy_interaction @ self.C_out  #(dim,)
+        logits = logits + (z_embeddings @ context_feature)
+        
+        #skip-gram feature: x^T Z z
+        skip_gram = (x_emb @ self.Z) @ z_embeddings.T
+        logits = logits + skip_gram
         
         return logits
     
