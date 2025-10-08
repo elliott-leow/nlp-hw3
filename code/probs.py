@@ -441,6 +441,9 @@ class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
         # training, but those wouldn't use nn.Parameter.
         self.X = nn.Parameter(torch.zeros((self.dim, self.dim)), requires_grad=True)
         self.Y = nn.Parameter(torch.zeros((self.dim, self.dim)), requires_grad=True)
+        
+        # Cache z_embeddings for efficiency during evaluation
+        self._z_embeddings_cache: Optional[torch.Tensor] = None
 
     def get_embedding(self, word: Wordtype) -> torch.Tensor:
         #Get embedding for a word using OOL for words not in lexicon.
@@ -451,6 +454,14 @@ class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
         else:
             #if ool is not available, return zero vector
             return torch.zeros(self.dim, dtype=torch.float32)
+    
+    def get_z_embeddings(self) -> torch.Tensor:
+        """Get the cached z_embeddings matrix, building it if necessary.
+        This avoids rebuilding the matrix on every logits() call."""
+        if self._z_embeddings_cache is None:
+            # Build and cache the z_embeddings matrix
+            self._z_embeddings_cache = torch.stack([self.get_embedding(z) for z in self.vocab_list])
+        return self._z_embeddings_cache
 
     def log_prob(self, x: Wordtype, y: Wordtype, z: Wordtype) -> float:
         """Return log p(z | xy) according to this language model."""
@@ -500,8 +511,8 @@ class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
         x_emb = self.get_embedding(x)  #(dim,)
         y_emb = self.get_embedding(y)  #(dim,)
         
-        #create a tensor of all z embeddings in vocabulary order
-        z_embeddings = torch.stack([self.get_embedding(z) for z in self.vocab_list])  #(vocab_size, dim)
+        #get cached z embeddings (much faster than rebuilding every time)
+        z_embeddings = self.get_z_embeddings()  #(vocab_size, dim)
 
         # f(x,y,z) = x^T * X * z + y^T * Y * z
  
@@ -662,7 +673,7 @@ class ImprovedLogLinearLanguageModel(EmbeddingLogLinearLanguageModel):
         #get embeddings
         x_emb = self.get_embedding(x)
         y_emb = self.get_embedding(y)
-        z_embeddings = torch.stack([self.get_embedding(z) for z in self.vocab_list])
+        z_embeddings = self.get_z_embeddings()  # Use cached z_embeddings
         
         #base bigram features: x^T X z + y^T Y z
         term1 = (x_emb @ self.X) @ z_embeddings.T
