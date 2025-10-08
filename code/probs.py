@@ -327,9 +327,6 @@ class LanguageModel:
 class CountBasedLanguageModel(LanguageModel):
 
     def log_prob(self, x: Wordtype, y: Wordtype, z: Wordtype) -> float:
-        # For count-based language models, it is usually convenient
-        # to compute the probability first (by dividing counts) and
-        # then taking the log.
         prob = self.prob(x, y, z)
         if prob == 0.0:
             return -math.inf
@@ -363,21 +360,11 @@ class AddLambdaLanguageModel(CountBasedLanguageModel):
         return ((self.event_count[x, y, z] + self.lambda_) /
                 (self.context_count[x, y] + self.lambda_ * self.vocab_size))
 
-        # Notice that summing the numerator over all values of typeZ
-        # will give the denominator.  Therefore, summing up the quotient
-        # over all values of typeZ will give 1, so sum_z p(z | ...) = 1
-        # as is required for any probability function.
-
-
 class BackoffAddLambdaLanguageModel(AddLambdaLanguageModel):
     def __init__(self, vocab: Vocab, lambda_: float) -> None:
         super().__init__(vocab, lambda_)
 
     def prob(self, x: Wordtype, y: Wordtype, z: Wordtype) -> float:
-        # Backoff add-lambda smoothing: recursively backs off to lower-order n-grams
-        # Don't forget the difference between the Wordtype z and the
-        # 1-element tuple (z,). If you're looking up counts,
-        # these will have very different counts!
         
         #recursively get backed off probability z given y
         backoff_prob_zy = self._backoff_prob_bigram(y, z)
@@ -403,7 +390,7 @@ class BackoffAddLambdaLanguageModel(AddLambdaLanguageModel):
 
 
 class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
-    # Note the use of multiple inheritance: we are both a LanguageModel and a torch.nn.Module.
+    '''Note the use of multiple inheritance: we are both a LanguageModel and a torch.nn.Module.'''
     
     def __init__(self, vocab: Vocab, lexicon_file: Path, l2: float, epochs: int) -> None:
         super().__init__(vocab)
@@ -431,18 +418,10 @@ class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
         self.vocab_list = list(self.vocab)
         self.word_to_idx = {word: i for i, word in enumerate(self.vocab_list)}
 
-        # We wrap the following matrices in nn.Parameter objects.
-        # This lets PyTorch know that these are parameters of the model
-        # that should be listed in self.parameters() and will be
-        # updated during training.
-        #
-        # We can also store other tensors in the model class,
-        # like constant coefficients that shouldn't be altered by
-        # training, but those wouldn't use nn.Parameter.
         self.X = nn.Parameter(torch.zeros((self.dim, self.dim)), requires_grad=True)
         self.Y = nn.Parameter(torch.zeros((self.dim, self.dim)), requires_grad=True)
         
-        # Cache z_embeddings for efficiency during evaluation
+        #cache embeddings
         self._z_embeddings_cache: Optional[torch.Tensor] = None
 
     def get_embedding(self, word: Wordtype) -> torch.Tensor:
@@ -456,28 +435,18 @@ class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
             return torch.zeros(self.dim, dtype=torch.float32)
     
     def get_z_embeddings(self) -> torch.Tensor:
-        """Get the cached z_embeddings matrix, building it if necessary.
-        This avoids rebuilding the matrix on every logits() call."""
+
         if self._z_embeddings_cache is None:
-            # Build and cache the z_embeddings matrix
+            #build and cache the z_embeddings matrix
             self._z_embeddings_cache = torch.stack([self.get_embedding(z) for z in self.vocab_list])
         return self._z_embeddings_cache
 
     def log_prob(self, x: Wordtype, y: Wordtype, z: Wordtype) -> float:
-        """Return log p(z | xy) according to this language model."""
-        # https://pytorch.org/docs/stable/generated/torch.Tensor.item.html
         return self.log_prob_tensor(x, y, z).item()
 
     @typechecked
     def log_prob_tensor(self, x: Wordtype, y: Wordtype, z: Wordtype) -> TorchScalar:
-        """Return the same value as log_prob, but stored as a tensor."""
         
-        # As noted below, it's important to use a tensor for training.
-        # Most of your intermediate quantities, like logits below, will
-        # also be stored as tensors.  (That is normal in PyTorch, so it
-        # would be weird to append `_tensor` to their names.  We only
-        # appended `_tensor` to the name of this method to distinguish
-        # it from the class's general `log_prob` method.)
 
         #get logits for all words in vocabulary
         logits = self.logits(x, y)  # shape: (vocab_size,)
@@ -525,11 +494,6 @@ class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
 
     def train(self, file: Path):    # type: ignore
         
-        ### Technically this method shouldn't be called `train`,
-        ### because this means it overrides not only `LanguageModel.train` (as desired)
-        ### but also `nn.Module.train` (which has a different type). 
-        ### However, we won't be trying to use the latter method.
-        ### The `type: ignore` comment above tells the type checker to ignore this inconsistency.
         
         # Optimization hyperparameters.
         #use instructions to determine learning rate
@@ -547,19 +511,16 @@ class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
             eta0 = 0.01
             log.info(f"Using default learning rate {eta0}")
 
-        # This is why we needed the nn.Parameter above.
-        # The optimizer needs to know the list of parameters
-        # it should be trying to update.
         optimizer = optim.SGD(self.parameters(), lr=eta0)
 
-        # Initialize the parameter matrices to be full of zeros.
-        nn.init.zeros_(self.X)   # type: ignore
-        nn.init.zeros_(self.Y)   # type: ignore
+        #initialize the parameter matrices to be full of zeros.
+        nn.init.zeros_(self.X)   
+        nn.init.zeros_(self.Y)  
 
         N = num_tokens(file)
         log.info("Start optimizing on {N} training tokens...")
 
-        # Training loop for the specified number of epochs
+        #training loop for the specified number of epochs
         total_trigrams = N * self.epochs
         trigram_count = 0
         
@@ -568,7 +529,7 @@ class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
         for epoch in range(self.epochs):
             log.info(f"Starting epoch {epoch + 1}/{self.epochs}")
             
-            # Get trigrams for this epoch
+            #get trigrams for this epoch
             trigrams = list(read_trigrams(file, self.vocab))
             
 
@@ -606,26 +567,6 @@ class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
 
         log.info("done optimizing.")
 
-        # So how does the `backward` method work?
-        #
-        # As Python sees it, your parameters and the values that you compute
-        # from them are not actually numbers.  They are `torch.Tensor` objects.
-        # A Tensor may represent a numeric scalar, vector, matrix, etc.
-        #
-        # Every Tensor knows how it was computed.  For example, if you write `a
-        # = b + exp(c)`, PyTorch not only computes `a` but also stores
-        # backpointers in `a` that remember how the numeric value of `a` depends
-        # on the numeric values of `b` and `c`.  In turn, `b` and `c` have their
-        # own backpointers that remember what they depend on, and so on, all the
-        # way back to the parameters.  This is just like the backpointers in
-        # parsing!
-        #
-        # Every Tensor has a `backward` method that computes the gradient of its
-        # numeric value with respect to the parameters, using "back-propagation"
-        # through this computation graph.  In particular, once you've computed
-        # the forward quantity F_i(θ) as a tensor, you can trace backwards to
-        # get its gradient -- i.e., to find out how rapidly it would change if
-        # each parameter were changed slightly.
 
 class ImprovedLogLinearLanguageModel(EmbeddingLogLinearLanguageModel):
     
