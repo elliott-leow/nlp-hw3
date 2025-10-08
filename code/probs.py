@@ -264,6 +264,11 @@ class LanguageModel:
             # map_location allows loading tensors on different device than saved
         if not isinstance(model, cls):
             raise ValueError(f"Type Error: expected object of type {cls} but got {type(model)} from file {model_path}")
+        
+        #eval mode
+        if isinstance(model, nn.Module):
+            model.eval()
+        
         log.info(f"Loaded model from {model_path}")
         return model
 
@@ -436,10 +441,15 @@ class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
     
     def get_z_embeddings(self) -> torch.Tensor:
 
-        if self._z_embeddings_cache is None:
-            #build and cache the z_embeddings matrix
-            self._z_embeddings_cache = torch.stack([self.get_embedding(z) for z in self.vocab_list])
-        return self._z_embeddings_cache
+        # check training mode
+        if self.training:
+            #always rebuild during training to maintain gradient graph
+            return torch.stack([self.get_embedding(z) for z in self.vocab_list])
+        else:
+            #use cache during evaluation for speed
+            if self._z_embeddings_cache is None:
+                self._z_embeddings_cache = torch.stack([self.get_embedding(z) for z in self.vocab_list])
+            return self._z_embeddings_cache
 
     def log_prob(self, x: Wordtype, y: Wordtype, z: Wordtype) -> float:
         return self.log_prob_tensor(x, y, z).item()
@@ -494,6 +504,7 @@ class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
 
     def train(self, file: Path):    # type: ignore
         
+        super.train()
         
         # Optimization hyperparameters.
         #use instructions to determine learning rate
@@ -651,8 +662,22 @@ class ImprovedLogLinearLanguageModel(EmbeddingLogLinearLanguageModel):
     def train(self, file: Path):
         #use same training structure as base model but with adamw
         
-        #determine learning rate based on file name
-        eta0 = 0.01
+        super(EmbeddingLogLinearLanguageModel, self).train()
+        
+        #determine learning rate based on file name (same logic as base model)
+        file_str = str(file)
+        if 'english' in file_str or 'spanish' in file_str or 'english_spanish' in file_str:
+            #language id
+            eta0 = 0.01  # 10^-2
+            log.info(f"Using learning rate {eta0} for language ID task")
+        elif 'gen' in file_str or 'spam' in file_str or 'gen_spam' in file_str:
+            #spam detection
+            eta0 = 0.0001  # 10^-5
+            log.info(f"Using learning rate {eta0} for spam detection task")
+        else:
+            #default
+            eta0 = 0.01
+            log.info(f"Using default learning rate {eta0}")
         
         #adamw optimizer instead of sgd
         optimizer = optim.AdamW(self.parameters(), lr=eta0, weight_decay=self.l2)
@@ -682,13 +707,11 @@ class ImprovedLogLinearLanguageModel(EmbeddingLogLinearLanguageModel):
                 #forward pass
                 log_prob = self.log_prob_tensor(x, y, z)
                 
-                #loss with l2 regularization
+                #loss
                 nll_loss = -log_prob
-                l2_reg = 0.5 * self.l2 * (torch.sum(self.X ** 2) + torch.sum(self.Y ** 2))
-                objective = nll_loss + l2_reg
                 
                 #backward pass
-                objective.backward()
+                nll_loss.backward()
                 
                 #update parameters
                 optimizer.step()
