@@ -504,7 +504,7 @@ class EmbeddingLogLinearLanguageModel(LanguageModel, nn.Module):
 
     def train(self, file: Path):    # type: ignore
         
-        super.train()
+        nn.Module.train(self, mode=True)
         
         # Optimization hyperparameters.
         #use instructions to determine learning rate
@@ -662,7 +662,7 @@ class ImprovedLogLinearLanguageModel(EmbeddingLogLinearLanguageModel):
     def train(self, file: Path):
         #use same training structure as base model but with adamw
         
-        super(EmbeddingLogLinearLanguageModel, self).train()
+        nn.Module.train(self, mode=True)
         
         #determine learning rate based on file name (same logic as base model)
         file_str = str(file)
